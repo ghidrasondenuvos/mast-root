@@ -32,10 +32,19 @@ function App() {
     tint = 'rgba(27, 24, 27, 0.85)'; // Πιο σκούρο για να διαβάζεται τέλεια η αναζήτηση
   }
 
+
+  
   const handleLoginSuccess = (user, notifs) => {
     setLoggedInUser(user);
-    // ΑΝ το notifs είναι undefined, βάλε έναν άδειο πίνακα []
-    setNotifications(notifs || []); 
+    
+    // Αν δεν έρθουν αληθινές ειδοποιήσεις από τον server, βάζουμε 3 δικές μας!
+    const defaultNotifications = notifs || [
+      { id: 1, text: 'Καλώς ήρθες ξανά στο Releaf!' },
+      { id: 2, text: 'Μια νέα δράση δενδροφύτευσης προστέθηκε κοντά σου.' },
+      { id: 3, text: 'Μην ξεχάσεις να συμπληρώσεις τις δεξιότητές σου.' }
+    ];
+    
+    setNotifications(defaultNotifications); 
     setCurrentView('dashboard'); 
   };
 
