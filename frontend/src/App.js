@@ -7,7 +7,8 @@ import DatabaseViewer from './components/DatabaseViewer';
 import CreateActionForm from './components/CreateActionForm';
 import SearchActions from './components/SearchActions'; 
 import ManageRequests from './components/ManageRequests';
-import CreateCampaignForm from './components/CreateCampaignForm'; // USE CASE 8
+import CreateCampaignForm from './components/CreateCampaignForm'; 
+import DonationCheckout from './components/DonationCheckout'; // USE CASE 9: Εισαγωγή του Checkout Πληρωμών
 
 import treeGif from './assets/tree.gif'; 
 import bellIcon from './assets/bell.png';
@@ -19,13 +20,19 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   
+  // --- ΝΕΟ STATE ΓΙΑ USE CASE 9 ---
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   let blurLevel = 15; 
   let tint = 'rgba(27, 24, 27, 0.4)';
 
-  if (currentView === 'register' || currentView === 'login' || currentView === 'profile_edit' || currentView === 'create_action' || currentView === 'manage_requests' || currentView === 'create_campaign') {
+  // Προσθήκη του 'browse_campaigns' στα views με χαμηλό θόλωμα
+  if (currentView === 'register' || currentView === 'login' || currentView === 'profile_edit' || currentView === 'create_action' || currentView === 'manage_requests' || currentView === 'create_campaign' || currentView === 'browse_campaigns') {
     blurLevel = 3; 
     tint = 'rgba(27, 24, 27, 0.75)';
   } else if (currentView === 'db' || currentView === 'actions' || currentView === 'search') {
@@ -35,6 +42,15 @@ function App() {
     blurLevel = 6;
     tint = 'rgba(27, 24, 27, 0.85)';
   }
+
+  // Συναρτήση για την ανάκτηση όλων των ενεργών καμπανιών από το API
+  const fetchCampaigns = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/campaigns');
+      const data = await res.json();
+      setCampaigns(data);
+    } catch (e) { console.error("Σφάλμα φόρτωσης καμπανιών:", e); }
+  };
 
   const fetchDashboardData = async (user) => {
     if (!user) return;
@@ -50,6 +66,11 @@ function App() {
       const reqData = await reqRes.json();
       setPendingRequestsCount(reqData.length || 0);
     } catch (e) { console.error(e); }
+
+    // Αν ο χρήστης είναι χορηγός, τραβάμε αυτόματα και τις καμπάνιες
+    if (user.account_type === 'sponsor') {
+      fetchCampaigns();
+    }
   };
 
   const handleLoginSuccess = (user) => {
@@ -77,6 +98,7 @@ function App() {
     setLoggedInUser(null);
     setNotifications([]);
     setPendingRequestsCount(0);
+    setCampaigns([]);
     setIsNotifOpen(false); 
     setCurrentView('home');
   };
@@ -172,29 +194,41 @@ function App() {
               <h2 style={{ fontFamily: 'var(--font-mono)', color: '#fff', fontSize: '1.6rem', marginBottom: '5px', textShadow: '0px 2px 5px rgba(0,0,0,0.8)' }}>
                 καλώς ήρθες, <span style={{ color: '#10b981' }}>{loggedInUser.username}</span>!
               </h2>
-              <p style={{ fontFamily: 'var(--font-mono)', color: '#ddd', fontSize: '1rem', marginBottom: '25px' }}>εδώ θα μπορείς να ελέγχεις την πρόοδό σου και να βρίσκεις δράσεις.</p>
+              <p style={{ fontFamily: 'var(--font-mono)', color: '#ddd', fontSize: '1rem', marginBottom: '25px' }}>
+                {loggedInUser.account_type === 'sponsor' ? 'εδώ μπορείτε να δείτε καμπάνιες και να προσφέρετε πόρους.' : 'εδώ θα μπορείτε να ελέγχετε την πρόοδό σου και να βρίσκεις δράσεις.'}
+              </p>
               
               <div style={{ display: 'flex', gap: '30px', height: '65vh', width: '100%' }}>
                 
                 {/* ΑΡΙΣΤΕΡΗ ΣΤΗΛΗ */}
                 <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                    <button className="releaf-button" style={{ background: '#10b981', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(16,185,129,0.3)', flex: 1 }} onClick={() => setCurrentView('create_action')}>
-                      + δημιουργία δράσης
-                    </button>
+                    
+                    {/* ΔΥΝΑΜΙΚΑ ΚΟΥΜΠΙΑ ΑΝΑΛΟΓΑ ΜΕ ΤΟΝ ΤΥΠΟ ΧΡΗΣΤΗ */}
+                    {loggedInUser.account_type === 'sponsor' ? (
+                      <button className="releaf-button" style={{ background: '#4f46e5', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(79,70,229,0.3)', flex: 1 }} onClick={() => { setCurrentView('browse_campaigns'); fetchCampaigns(); }}>
+                        💳 Καμπάνιες Χρηματοδότησης
+                      </button>
+                    ) : (
+                      <>
+                        <button className="releaf-button" style={{ background: '#10b981', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(16,185,129,0.3)', flex: 1 }} onClick={() => setCurrentView('create_action')}>
+                          + δημιουργία δράσης
+                        </button>
 
-                    <button className="releaf-button" style={{ background: '#4f46e5', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(79,70,229,0.3)', flex: 1 }} onClick={() => setCurrentView('create_campaign')}>
-                      + δημιουργία καμπάνιας
-                    </button>
+                        <button className="releaf-button" style={{ background: '#4f46e5', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(79,70,229,0.3)', flex: 1 }} onClick={() => setCurrentView('create_campaign')}>
+                          + δημιουργία καμπάνιας
+                        </button>
 
-                    <button className="releaf-button" style={{ position: 'relative', background: 'var(--accent-color)', color: 'white', flex: 1 }} onClick={() => setCurrentView('manage_requests')}>
-                      διαχείριση αιτήσεων
-                      {pendingRequestsCount > 0 && (
-                        <span style={{ position: 'absolute', top: '-10px', right: '-10px', background: '#ff4d4d', color: 'white', borderRadius: '50%', width: '25px', height: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                          {pendingRequestsCount}
-                        </span>
-                      )}
-                    </button>
+                        <button className="releaf-button" style={{ position: 'relative', background: 'var(--accent-color)', color: 'white', flex: 1 }} onClick={() => setCurrentView('manage_requests')}>
+                          διαχείριση αιτήσεων
+                          {pendingRequestsCount > 0 && (
+                            <span style={{ position: 'absolute', top: '-10px', right: '-10px', background: '#ff4d4d', color: 'white', borderRadius: '50%', width: '25px', height: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                              {pendingRequestsCount}
+                            </span>
+                          )}
+                        </button>
+                      </>
+                    )}
                     
                     <button className="releaf-button" style={{ background: 'transparent', border: '1px solid var(--accent-color)', color: 'var(--accent-color)' }} onClick={() => setCurrentView('db')}>
                       🛠️ db admin
@@ -229,10 +263,7 @@ function App() {
       {currentView === 'login' && <LoginForm onBack={() => setCurrentView('home')} onLoginSuccess={handleLoginSuccess} />}
       {currentView === 'profile_edit' && loggedInUser && <ProfileEditForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} onUpdateSuccess={handleProfileUpdate} onLogout={handleLogout} />}
       {currentView === 'create_action' && loggedInUser && <CreateActionForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} />}
-      
-      {currentView === 'create_campaign' && loggedInUser && (
-        <CreateCampaignForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} />
-      )}
+      {currentView === 'create_campaign' && loggedInUser && <CreateCampaignForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} />}
 
       {currentView === 'manage_requests' && loggedInUser && (
         <ManageRequests 
@@ -240,6 +271,52 @@ function App() {
           onBack={() => setCurrentView('dashboard')} 
           onRequestHandled={() => fetchDashboardData(loggedInUser)} 
         />
+      )}
+
+      {/* USE CASE 9: ΟΘΟΝΗ ΑΝΑΖΗΤΗΣΗΣ / ΠΡΟΒΟΛΗΣ ΚΑΜΠΑΝΙΩΝ ΓΙΑ ΧΟΡΗΓΟΥΣ */}
+      {currentView === 'browse_campaigns' && loggedInUser && (
+        <div style={{ background: 'rgba(27, 24, 27, 0.95)', padding: '40px', borderRadius: '15px', width: '90%', maxWidth: '900px', height: '75vh', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+          <h3 style={{ fontFamily: 'var(--font-heading)', color: '#4f46e5', margin: '0 0 20px 0', fontSize: '1.8rem' }}>
+            💳 Ενεργές Καμπάνιες Χρηματοδότησης
+          </h3>
+          
+          <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', padding: '5px' }}>
+            {campaigns.length === 0 ? (
+              <p style={{ color: '#aaa', fontFamily: 'var(--font-mono)', textAlign: 'center', marginTop: '30px' }}>Δεν υπάρχουν διαθέσιμες καμπάνιες αυτή τη στιγμή.</p>
+            ) : (
+              campaigns.map(c => {
+                const percentage = Math.min(100, Math.round((c.current_amount / c.goal_amount) * 100)) || 0;
+                return (
+                  <div key={c.id} style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'left' }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 5px 0', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '1.2rem' }}>{c.title}</h4>
+                      <span style={{ fontSize: '0.75rem', color: '#10b981', fontFamily: 'var(--font-mono)', background: 'rgba(16,185,129,0.1)', padding: '3px 8px', borderRadius: '4px' }}>🏢 {c.organisation}</span>
+                      <p style={{ fontSize: '0.85rem', color: '#ccc', margin: '12px 0', lineHeight: '1.4' }}>{c.description}</p>
+                      <p style={{ fontSize: '0.8rem', color: '#a67c52', margin: '5px 0', fontFamily: 'var(--font-mono)' }}>🌲 Δράση: {c.action_title}</p>
+                    </div>
+                    
+                    <div style={{ marginTop: '15px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#fff', marginBottom: '5px', fontFamily: 'var(--font-mono)' }}>
+                        <span>Μαζεύτηκαν: €{c.current_amount}</span>
+                        <span>Στόχος: €{c.goal_amount}</span>
+                      </div>
+                      
+                      {/* Μπάρα Προόδου */}
+                      <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden', marginBottom: '15px' }}>
+                        <div style={{ width: `${percentage}%`, height: '100%', background: '#4f46e5', transition: 'width 0.5s ease' }} />
+                      </div>
+                      
+                      <button className="releaf-button" style={{ width: '100%', background: '#4f46e5', color: 'white', margin: 0, fontWeight: 'bold' }} onClick={() => { setSelectedCampaign(c); setIsCheckoutOpen(true); }}>
+                        Υποστήριξη (Δωρεά)
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <button className="releaf-button" style={{ marginTop: '20px', alignSelf: 'center', background: 'transparent', border: '1px solid white' }} onClick={() => setCurrentView('dashboard')}>Επιστροφή</button>
+        </div>
       )}
 
       {currentView === 'search' && loggedInUser && (
@@ -268,15 +345,22 @@ function App() {
               <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)', fontWeight: 'bold' }} onClick={() => { setCurrentView('dashboard'); setIsSidebarOpen(false); }}>▸ dashboard</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => { setCurrentView('profile_edit'); setIsSidebarOpen(false); }}>το προφίλ μου</li>
               
-              <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)' }} onClick={() => { setCurrentView('create_action'); setIsSidebarOpen(false); }}>+ δημιουργία δράσης</li>
-              <li style={{ margin: '20px 0', cursor: 'pointer', color: '#4f46e5' }} onClick={() => { setCurrentView('create_campaign'); setIsSidebarOpen(false); }}>+ δημιουργία καμπάνιας</li>
-              
-              <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => { setCurrentView('manage_requests'); setIsSidebarOpen(false); }}>
-                διαχείριση αιτήσεων
-                {pendingRequestsCount > 0 && (
-                  <span style={{ background: '#ff4d4d', color: 'white', borderRadius: '50%', padding: '2px 8px', fontSize: '0.8rem', fontWeight: 'bold' }}>{pendingRequestsCount}</span>
-                )}
-              </li>
+              {/* ΔΥΝΑΜΙΚΟ ΜΕΝΟΥ SIDEBAR ΑΝΑΛΟΓΑ ΜΕ ΤΟ ACCOUNT TYPE */}
+              {loggedInUser.account_type === 'sponsor' ? (
+                <li style={{ margin: '20px 0', cursor: 'pointer', color: '#4f46e5', fontWeight: 'bold' }} onClick={() => { setCurrentView('browse_campaigns'); fetchCampaigns(); setIsSidebarOpen(false); }}>💳 καμπάνιες χρηματοδότησης</li>
+              ) : (
+                <>
+                  <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)' }} onClick={() => { setCurrentView('create_action'); setIsSidebarOpen(false); }}>+ δημιουργία δράσης</li>
+                  <li style={{ margin: '20px 0', cursor: 'pointer', color: '#4f46e5' }} onClick={() => { setCurrentView('create_campaign'); setIsSidebarOpen(false); }}>+ δημιουργία καμπάνιας</li>
+                  
+                  <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => { setCurrentView('manage_requests'); setIsSidebarOpen(false); }}>
+                    διαχείριση αιτήσεων
+                    {pendingRequestsCount > 0 && (
+                      <span style={{ background: '#ff4d4d', color: 'white', borderRadius: '50%', padding: '2px 8px', fontSize: '0.8rem', fontWeight: 'bold' }}>{pendingRequestsCount}</span>
+                    )}
+                  </li>
+                </>
+              )}
 
               <li style={{ margin: '20px 0', cursor: 'pointer', color: '#10b981', fontWeight: 'bold' }} onClick={() => { setCurrentView('search'); setIsSidebarOpen(false); }}>🔍 αναζήτηση δράσεων</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => setIsSidebarOpen(false)}>μηνύματα</li>
@@ -286,6 +370,19 @@ function App() {
           )}
         </ul>
       </div>
+
+      {/* USE CASE 9: ΕΜΦΑΝΙΣΗ MODAL ΠΛΗΡΩΜΗΣ (CHECKOUT) ΟΤΑΝ ΕΙΝΑΙ ΑΝΟΙΧΤΟ */}
+      {isCheckoutOpen && selectedCampaign && (
+        <DonationCheckout 
+          currentUser={loggedInUser} 
+          campaign={selectedCampaign} 
+          onClose={() => setIsCheckoutOpen(false)} 
+          onSuccess={() => {
+            setIsCheckoutOpen(false);
+            fetchCampaigns(); // Ανανέωση των ποσών μετά από επιτυχή δωρεά!
+          }} 
+        />
+      )}
 
     </BackgroundWrapper>
   );

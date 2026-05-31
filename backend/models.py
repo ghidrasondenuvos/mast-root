@@ -91,3 +91,30 @@ class FundraisingCampaign(Base):
     
     action = relationship("EnvironmentalAction")
     creator = relationship("User")
+
+    # --- USE CASE 9: ΔΩΡΕΕΣ & ΠΛΗΡΩΜΕΣ ---
+class Donation(Base):
+    __tablename__ = "donations"
+    id = Column(Integer, primary_key=True, index=True)
+    sponsor_id = Column(Integer, ForeignKey("users.user_id"))
+    campaign_id = Column(Integer, ForeignKey("fundraising_campaigns.id"))
+    amount = Column(Integer)
+    
+    sponsor = relationship("User")
+    campaign = relationship("FundraisingCampaign")
+
+class Payment(Base):
+    __tablename__ = "payments"
+    id = Column(Integer, primary_key=True, index=True)
+    donation_id = Column(Integer, ForeignKey("donations.id"))
+    status = Column(String, default="completed") # pending, completed, failed
+    
+    donation = relationship("Donation")
+
+class Receipt(Base):
+    __tablename__ = "receipts"
+    id = Column(Integer, primary_key=True, index=True)
+    donation_id = Column(Integer, ForeignKey("donations.id"))
+    receipt_number = Column(String, unique=True, index=True)
+    
+    donation = relationship("Donation")

@@ -1,3 +1,4 @@
+import uuid
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -258,7 +259,7 @@ def participate_in_action(action_id: int, data: ParticipateRequest, db: Session 
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Σφάλμα Συστήματος: {str(e)}")
     
-    
+
 # --- USE CASE 7: ΔΙΑΧΕΙΡΙΣΗ ΑΙΤΗΣΕΩΝ & ΕΙΔΟΠΟΙΗΣΕΙΣ ---
 
 @app.get("/api/org-requests/{user_id}")
@@ -421,3 +422,78 @@ def create_campaign(data: CampaignCreate, db: Session = Depends(database.get_db)
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+# --- ΝΕΑ SCHEMAS ΓΙΑ USE CASE 9 ---
+class DonationSubmit(BaseModel):
+    sponsor_id: int
+    campaign_id: int
+    amount: int = Field(..., gt=0)
+    card_number: str
+
+# --- ENDPOINT: ΛΙΣΤΑ ΚΑΜΠΑΝΙΩΝ ---
+@app.get("/api/campaigns")
+def get_all_campaigns(db: Session = Depends(database.get_db)):
+    campaigns = db.query(models.FundraisingCampaign).all()
+    result = []
+    for c in campaigns:
+        result.append({
+            "id": c.id,
+            "title": c.title,
+            "description": c.description,
+            "goal_amount": c.goal_amount,
+            "current_amount": c.current_amount,
+            "action_title": c.action.title if c.action else "-",
+            "organisation": c.action.organisation.name if c.action and c.action.organisation else "-"
+        })
+    return result
+
+# --- ENDPOINT: ΕΠΕΞΕΡΓΑΣΙΑ ΔΩΡΕΑΣ (USE CASE 9) ---
+@app.post("/api/donate")
+def process_donation(data: DonationSubmit, db: Session = Depends(database.get_db)):
+    try:
+        # 1. ΕΛΕΓΧΟΣ SPONSOR (Διαχείριση Δωρεάς)
+        sponsor = db.query(models.User).filter(models.User.user_id == data.sponsor_id).first()
+        if not sponsor or not sponsor.profile or sponsor.profile.account_type != "sponsor":
+            raise HTTPException(status_code=403, detail="Μόνο εγγεγραμμένοι χορηγοί (sponsors) μπορούν να κάνουν δωρεά.")
+            
+        # Mock έλεγχος πιστωτικής κάρτας
+        if len(data.card_number) < 16:
+            raise HTTPException(status_code=400, detail="Μη έγκυρος αριθμός κάρτας. Παρακαλώ ελέγξτε τα στοιχεία σας.")
+
+        # 2. ΕΛΕΓΧΟΣ ΚΑΜΠΑΝΙΑΣ & ΔΡΑΣΗΣ
+        campaign = db.query(models.FundraisingCampaign).filter(models.FundraisingCampaign.id == data.campaign_id).first()
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Η καμπάνια δεν βρέθηκε στο σύστημα.")
+        
+        action = campaign.action
+        if not action:
+            raise HTTPException(status_code=404, detail="Σφάλμα: Η καμπάνια δεν έχει συνδεδεμένη έγκυρη περιβαλλοντική δράση.")
+
+        # 3. ΕΠΕΞΕΡΓΑΣΙΑ ΠΛΗΡΩΜΗΣ & ΚΑΤΑΧΩΡΗΣΗ ΔΩΡΕΑΣ
+        # Δημιουργία Donation
+        new_donation = models.Donation(sponsor_id=data.sponsor_id, campaign_id=data.campaign_id, amount=data.amount)
+        db.add(new_donation)
+        db.flush() # Flush για να πάρουμε το νέο donation.id
+
+        # Δημιουργία Payment
+        new_payment = models.Payment(donation_id=new_donation.id, status="completed")
+        db.add(new_payment)
+
+        # Δημιουργία Απόδειξης (Receipt)
+        receipt_no = f"REC-{uuid.uuid4().hex[:8].upper()}"
+        new_receipt = models.Receipt(donation_id=new_donation.id, receipt_number=receipt_no)
+        db.add(new_receipt)
+
+        # Ενημέρωση ποσού καμπάνιας
+        campaign.current_amount += data.amount
+
+        db.commit()
+        return {"status": "success", "message": "Επιτυχής δωρεά! Σας ευχαριστούμε.", "receipt": receipt_no}
+
+    except HTTPException as he:
+        db.rollback()
+        raise he
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Σφάλμα Συστήματος: {str(e)}")
