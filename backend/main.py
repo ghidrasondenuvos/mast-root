@@ -1,18 +1,16 @@
-# backend/main.py
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware # Απαραίτητο για το React
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Ρύθμιση CORS για να "μιλάει" το React με την Python
+# ΑΥΤΟ ΕΙΝΑΙ ΤΟ ΚΛΕΙΔΙ ΓΙΑ ΤΗ ΣΥΝΔΕΣΗ
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # Επιτρέπει αιτήματα από παντού (για local testing)
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/actions")
-def get_actions():
-    # Εδώ θα καλείτε τη βάση δεδομένων σας
-    return {"message": "Λίστα περιβαλλοντικών δράσεων"}
+@app.get("/test-connection")
+def test_connection():
+    return {"message": "Η σύνδεση είναι ενεργή!"}
