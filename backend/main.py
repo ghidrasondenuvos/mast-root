@@ -50,6 +50,44 @@ def register_user(data: UserRegistration, db: Session = Depends(database.get_db)
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
     
+# --- ΠΡΟΣΘΗΚΗ ΓΙΑ ΤΟ USE CASE 2 (ΣΥΝΔΕΣΗ) ---
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+@app.post("/login")
+def login_user(data: UserLogin, db: Session = Depends(database.get_db)):
+    # 1. Αναζήτηση χρήστη με βάση το email
+    user = db.query(models.User).filter(models.User.email == data.email).first()
+    
+    # 2. Έλεγχος αν υπάρχει και αν ταιριάζει ο κωδικός
+    if not user or user.password != data.password:
+        raise HTTPException(status_code=401, detail="λάθος email ή κωδικός πρόσβασης.")
+    
+    # 3. Φόρτωση του Profile για να δούμε τι τύπος χρήστη είναι
+    profile = user.profile
+    account_type = profile.account_type if profile else "unknown"
+    
+    # 4. Φόρτωση Ειδοποιήσεων (Mock Data για τώρα, μέχρι να φτιάξουμε πίνακα)
+    notifications = [
+        {"id": 1, "text": f"καλώς ήρθες ξανά, {user.username}!"},
+        {"id": 2, "text": "νέες περιβαλλοντικές δράσεις στην περιοχή σου."},
+        {"id": 3, "text": "η οργάνωση 'GreenEarth' αναζητά εθελοντές."}
+    ]
+
+    # Επιστροφή της συνεδρίας του χρήστη (Session Data)
+    return {
+        "message": "επιτυχής σύνδεση",
+        "user": {
+            "id": user.user_id,
+            "username": user.username,
+            "account_type": account_type
+        },
+        "notifications": notifications
+    }
+# ----------------------------------------------
+
 @app.get("/api/db-view")
 def view_database(db: Session = Depends(database.get_db)):
     users = db.query(models.User).all()
