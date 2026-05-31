@@ -7,6 +7,7 @@ import DatabaseViewer from './components/DatabaseViewer';
 import CreateActionForm from './components/CreateActionForm';
 import SearchActions from './components/SearchActions'; 
 import ManageRequests from './components/ManageRequests';
+import CreateCampaignForm from './components/CreateCampaignForm'; // USE CASE 8
 
 import treeGif from './assets/tree.gif'; 
 import bellIcon from './assets/bell.png';
@@ -15,7 +16,6 @@ function App() {
   const [currentView, setCurrentView] = useState('home');
   const [loggedInUser, setLoggedInUser] = useState(null);
   
-  // States για Ειδοποιήσεις και Counters
   const [notifications, setNotifications] = useState([]);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   
@@ -25,7 +25,7 @@ function App() {
   let blurLevel = 15; 
   let tint = 'rgba(27, 24, 27, 0.4)';
 
-  if (currentView === 'register' || currentView === 'login' || currentView === 'profile_edit' || currentView === 'create_action' || currentView === 'manage_requests') {
+  if (currentView === 'register' || currentView === 'login' || currentView === 'profile_edit' || currentView === 'create_action' || currentView === 'manage_requests' || currentView === 'create_campaign') {
     blurLevel = 3; 
     tint = 'rgba(27, 24, 27, 0.75)';
   } else if (currentView === 'db' || currentView === 'actions' || currentView === 'search') {
@@ -36,19 +36,15 @@ function App() {
     tint = 'rgba(27, 24, 27, 0.85)';
   }
 
-  // ΑΛΛΑΓΗ: Τώρα τραβάει τις αιτήσεις για ΟΛΟΥΣ τους χρήστες (ανεξαρτήτως ρόλου) 
-  // αρκεί βέβαια να έχουν δημιουργήσει κάποια δράση.
   const fetchDashboardData = async (user) => {
     if (!user) return;
     
-    // Τραβάμε Ειδοποιήσεις
     try {
       const notifRes = await fetch(`http://127.0.0.1:8000/api/notifications/${user.id}`);
       const notifData = await notifRes.json();
       setNotifications(notifData);
     } catch (e) { console.error(e); }
 
-    // Τραβάμε Αιτήσεις Συμμετοχής για τις Δράσεις ΤΟΥ (αφαιρέθηκε το if organisation)
     try {
       const reqRes = await fetch(`http://127.0.0.1:8000/api/org-requests/${user.id}`);
       const reqData = await reqRes.json();
@@ -187,7 +183,10 @@ function App() {
                       + δημιουργία δράσης
                     </button>
 
-                    {/* ΑΛΛΑΓΗ: Το κουμπί είναι ορατό σε ΟΛΟΥΣ τους χρήστες πλέον! */}
+                    <button className="releaf-button" style={{ background: '#4f46e5', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(79,70,229,0.3)', flex: 1 }} onClick={() => setCurrentView('create_campaign')}>
+                      + δημιουργία καμπάνιας
+                    </button>
+
                     <button className="releaf-button" style={{ position: 'relative', background: 'var(--accent-color)', color: 'white', flex: 1 }} onClick={() => setCurrentView('manage_requests')}>
                       διαχείριση αιτήσεων
                       {pendingRequestsCount > 0 && (
@@ -210,7 +209,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* ΔΕΞΙΑ ΣΤΗΛΗ (Search) */}
+                {/* ΔΕΞΙΑ ΣΤΗΛΗ */}
                 <div style={{ flex: '1.2', background: 'rgba(27, 24, 27, 0.85)', borderRadius: '20px', padding: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
                   <SearchActions currentUser={loggedInUser} />
                 </div>
@@ -225,12 +224,16 @@ function App() {
         </div>
       )}
 
-      {/* OVERLAYS */}
+      {/* OVERLAYS & FORMS */}
       {currentView === 'register' && <RegistrationForm onBack={() => setCurrentView('home')} onComplete={() => {}} />}
       {currentView === 'login' && <LoginForm onBack={() => setCurrentView('home')} onLoginSuccess={handleLoginSuccess} />}
-      {currentView === 'profile_edit' && loggedInUser && <ProfileEditForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} onUpdateSuccess={handleProfileUpdate} />}
+      {currentView === 'profile_edit' && loggedInUser && <ProfileEditForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} onUpdateSuccess={handleProfileUpdate} onLogout={handleLogout} />}
       {currentView === 'create_action' && loggedInUser && <CreateActionForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} />}
       
+      {currentView === 'create_campaign' && loggedInUser && (
+        <CreateCampaignForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} />
+      )}
+
       {currentView === 'manage_requests' && loggedInUser && (
         <ManageRequests 
           currentUser={loggedInUser} 
@@ -264,9 +267,10 @@ function App() {
             <>
               <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)', fontWeight: 'bold' }} onClick={() => { setCurrentView('dashboard'); setIsSidebarOpen(false); }}>▸ dashboard</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => { setCurrentView('profile_edit'); setIsSidebarOpen(false); }}>το προφίλ μου</li>
-              <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)' }} onClick={() => { setCurrentView('create_action'); setIsSidebarOpen(false); }}>+ δημιουργία δράσης</li>
               
-              {/* ΑΛΛΑΓΗ ΣΤΟ SIDEBAR: Ορατό σε όλους (Αν δεν έχουν δράσεις απλά δε θα χει αιτήσεις) */}
+              <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)' }} onClick={() => { setCurrentView('create_action'); setIsSidebarOpen(false); }}>+ δημιουργία δράσης</li>
+              <li style={{ margin: '20px 0', cursor: 'pointer', color: '#4f46e5' }} onClick={() => { setCurrentView('create_campaign'); setIsSidebarOpen(false); }}>+ δημιουργία καμπάνιας</li>
+              
               <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => { setCurrentView('manage_requests'); setIsSidebarOpen(false); }}>
                 διαχείριση αιτήσεων
                 {pendingRequestsCount > 0 && (

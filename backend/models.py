@@ -76,3 +76,18 @@ class Notification(Base):
     text = Column(String)
     
     user = relationship("User")
+
+    # --- ΝΕΟΣ ΠΙΝΑΚΑΣ ΓΙΑ ΤΟ USE CASE 8 (ΚΑΜΠΑΝΙΕΣ) ---
+class FundraisingCampaign(Base):
+    __tablename__ = "fundraising_campaigns"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    description = Column(String)
+    goal_amount = Column(Integer)
+    current_amount = Column(Integer, default=0)
+    
+    action_id = Column(Integer, ForeignKey("environmental_actions.id"))
+    creator_user_id = Column(Integer, ForeignKey("users.user_id"))
+    
+    action = relationship("EnvironmentalAction")
+    creator = relationship("User")

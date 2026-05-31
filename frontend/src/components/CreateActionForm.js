@@ -38,7 +38,7 @@ function CreateActionForm({ currentUser, onBack }) {
     description: '',
     max_participants: 10,
     location_name: '',
-    action_type_name: ''
+    action_type_name: '' // Πλέον συμπληρώνεται από το dropdown
   });
 
   const [step, setStep] = useState(1); 
@@ -76,7 +76,6 @@ function CreateActionForm({ currentUser, onBack }) {
     setStep(2);
   };
 
-  // Στυλ για τα μικρά labels πάνω από τα πεδία
   const labelStyle = { 
     fontSize: '0.75rem', 
     color: 'var(--accent-color)', 
@@ -131,13 +130,27 @@ function CreateActionForm({ currentUser, onBack }) {
               </div>
               <div style={{ flex: 2 }}>
                 <span style={labelStyle}>ΤΥΠΟΣ ΔΡΑΣΗΣ</span>
-                <input 
+                
+                {/* ΤΟ ΝΕΟ DROPDOWN ΜΕ ΤΙΣ 10 ΕΠΙΛΟΓΕΣ */}
+                <select 
                   className="releaf-input" 
-                  placeholder="π.χ. Καθαρισμός" 
-                  style={{ width: '100%', boxSizing: 'border-box', margin: 0 }}
+                  style={{ width: '100%', boxSizing: 'border-box', margin: 0, appearance: 'none', cursor: 'pointer' }}
                   value={form.action_type_name} 
                   onChange={e => setForm({...form, action_type_name: e.target.value})} 
-                />
+                >
+                  <option value="" disabled>Επιλέξτε Κατηγορία...</option>
+                  <option value="Δενδροφύτευση">🌳 Δενδροφύτευση</option>
+                  <option value="Καθαρισμός Παραλίας">🏖️ Καθαρισμός Παραλίας</option>
+                  <option value="Καθαρισμός Δάσους">🌲 Καθαρισμός Δάσους</option>
+                  <option value="Ανακύκλωση / Κυκλική Οικονομία">♻️ Ανακύκλωση / Κυκλική Οικονομία</option>
+                  <option value="Προστασία Πανίδας">🦊 Προστασία Πανίδας</option>
+                  <option value="Πυροπροστασία / Δασοπροστασία">🔥 Πυροπροστασία / Δασοπροστασία</option>
+                  <option value="Διάσωση & Περίθαλψη Ζώων">🐾 Διάσωση & Περίθαλψη Ζώων</option>
+                  <option value="Περιβαλλοντική Εκπαίδευση">📚 Περιβαλλοντική Εκπαίδευση</option>
+                  <option value="Φροντίδα Αστικού Πρασίνου">🏙️ Φροντίδα Αστικού Πρασίνου</option>
+                  <option value="Αποκατάσταση Τοπίου">⛰️ Αποκατάσταση Τοπίου</option>
+                </select>
+
               </div>
             </div>
 
@@ -152,7 +165,6 @@ function CreateActionForm({ currentUser, onBack }) {
               />
             </div>
             
-            {/* Ο ΧΑΡΤΗΣ */}
             <div style={{ height: '220px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.2)', marginTop: '-5px' }}>
               <MapContainer center={[38.246242, 21.735084]} zoom={6} style={{ height: '100%', width: '100%', zIndex: 1 }}>
                 <TileLayer

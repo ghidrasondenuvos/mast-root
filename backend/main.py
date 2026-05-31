@@ -48,6 +48,12 @@ class ParticipateRequest(BaseModel):
 class DecisionSubmit(BaseModel):
     org_user_id: int
     status: str  # 'approved' ή 'rejected'
+class CampaignCreate(BaseModel):
+    title: str = Field(..., min_length=3)
+    description: str
+    goal_amount: int = Field(..., gt=0)
+    action_id: int
+    creator_user_id: int
 
 # --- ENDPOINTS ΧΡΗΣΤΩΝ ---
 @app.post("/register")
@@ -228,11 +234,22 @@ def participate_in_action(action_id: int, data: ParticipateRequest, db: Session 
         if current_participants >= action.max_participants:
             raise HTTPException(status_code=400, detail="Σφάλμα: Η δράση είναι πλήρης. Δεν υπάρχουν διαθέσιμες θέσεις.")
             
-        new_participation = models.ParticipationRequest(user_id=data.user_id, action_id=action_id, status="pending")
+        # --- ΝΕΑ ΛΟΓΙΚΗ: Έλεγχος του διοργανωτή ---
+        # Βρίσκουμε τον χρήστη που δημιούργησε τη δράση μέσω της οργάνωσης/προφίλ του
+        creator = db.query(models.User).filter(models.User.user_id == action.organisation.user_id).first()
+        is_org = creator.profile.account_type == "organisation" if creator and creator.profile else False
+        
+        # Αν είναι Οργανισμός πάει σε αναμονή, αλλιώς εγκρίνεται αυτόματα!
+        request_status = "pending" if is_org else "approved"
+        
+        new_participation = models.ParticipationRequest(user_id=data.user_id, action_id=action_id, status=request_status)
         db.add(new_participation)
         db.commit()
         
-        return {"status": "success", "message": "Επιτυχής δήλωση συμμετοχής! Η αίτησή σας είναι υπό έλεγχο."}
+        # Προσαρμόζουμε το μήνυμα ανάλογα με την απόφαση
+        success_msg = "Επιτυχής δήλωση συμμετοχής! Η αίτησή σας είναι υπό έλεγχο." if is_org else "Επιτυχής δήλωση! Εγκριθήκατε αυτόματα για τη δράση."
+        
+        return {"status": "success", "message": success_msg}
 
     except HTTPException as he:
         db.rollback()
@@ -240,8 +257,8 @@ def participate_in_action(action_id: int, data: ParticipateRequest, db: Session 
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Σφάλμα Συστήματος: {str(e)}")
-
-
+    
+    
 # --- USE CASE 7: ΔΙΑΧΕΙΡΙΣΗ ΑΙΤΗΣΕΩΝ & ΕΙΔΟΠΟΙΗΣΕΙΣ ---
 
 @app.get("/api/org-requests/{user_id}")
@@ -358,3 +375,49 @@ def view_all_requests(db: Session = Depends(database.get_db)):
             "status": r.status
         })
     return result
+
+# --- USE CASE 8: ΚΑΜΠΑΝΙΕΣ ---
+@app.get("/api/user-actions/{user_id}")
+def get_user_actions(user_id: int, db: Session = Depends(database.get_db)):
+    """Επιστρέφει τις δράσεις που έχει δημιουργήσει ο συγκεκριμένος χρήστης/εθελοντής"""
+    org = db.query(models.Organisation).filter(models.Organisation.user_id == user_id).first()
+    if not org:
+        return []
+    actions = db.query(models.EnvironmentalAction).filter(models.EnvironmentalAction.organisation_id == org.id).all()
+    return [{"id": a.id, "title": a.title} for a in actions]
+
+@app.post("/api/campaigns")
+def create_campaign(data: CampaignCreate, db: Session = Depends(database.get_db)):
+    try:
+        # 1. Έλεγχος Στοιχείων Καμπάνιας
+        if data.goal_amount <= 0:
+            raise HTTPException(status_code=400, detail="Το ποσό στόχος πρέπει να είναι έγκυρο.")
+
+        # 2. Έλεγχος Συσχετισμένης Δράσης (Ανήκει όντως στον χρήστη;)
+        action = db.query(models.EnvironmentalAction).filter(models.EnvironmentalAction.id == data.action_id).first()
+        if not action:
+            raise HTTPException(status_code=404, detail="Η συσχετισμένη δράση δεν βρέθηκε.")
+
+        # 3. Έλεγχος Εθελοντή / Organisation
+        org = db.query(models.Organisation).filter(models.Organisation.user_id == data.creator_user_id).first()
+        if not org or action.organisation_id != org.id:
+            raise HTTPException(status_code=403, detail="Μόνο ο διοργανωτής της δράσης μπορεί να δημιουργήσει καμπάνια.")
+
+        # 4. Καταχώρηση Καμπάνιας
+        new_campaign = models.FundraisingCampaign(
+            title=data.title,
+            description=data.description,
+            goal_amount=data.goal_amount,
+            action_id=data.action_id,
+            creator_user_id=data.creator_user_id
+        )
+        db.add(new_campaign)
+        db.commit()
+        return {"status": "success", "message": "Η καμπάνια καταχωρήθηκε επιτυχώς!"}
+        
+    except HTTPException as he:
+        db.rollback()
+        raise he
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
