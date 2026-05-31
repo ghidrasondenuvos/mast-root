@@ -8,8 +8,11 @@ import CreateActionForm from './components/CreateActionForm';
 import SearchActions from './components/SearchActions'; 
 import ManageRequests from './components/ManageRequests';
 import CreateCampaignForm from './components/CreateCampaignForm'; 
-import DonationCheckout from './components/DonationCheckout'; // USE CASE 9: Εισαγωγή του Checkout Πληρωμών
+import DonationCheckout from './components/DonationCheckout';
+import EnvironmentalNeedsDashboard from './components/EnvironmentalNeedsDashboard'; 
+import CertificatesDashboard from './components/CertificatesDashboard'; // USE CASE 11
 
+import logo from './assets/logo.png'; // Το νέο Logo!
 import treeGif from './assets/tree.gif'; 
 import bellIcon from './assets/bell.png';
 
@@ -20,7 +23,6 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   
-  // --- ΝΕΟ STATE ΓΙΑ USE CASE 9 ---
   const [campaigns, setCampaigns] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -31,19 +33,15 @@ function App() {
   let blurLevel = 15; 
   let tint = 'rgba(27, 24, 27, 0.4)';
 
-  // Προσθήκη του 'browse_campaigns' στα views με χαμηλό θόλωμα
-  if (currentView === 'register' || currentView === 'login' || currentView === 'profile_edit' || currentView === 'create_action' || currentView === 'manage_requests' || currentView === 'create_campaign' || currentView === 'browse_campaigns') {
+  // Προσθήκη του 'certificates' στα views που έχουν μικρό θόλωμα (blurLevel = 3)
+  if (['register', 'login', 'profile_edit', 'create_action', 'manage_requests', 'create_campaign', 'browse_campaigns', 'certificates'].includes(currentView)) {
     blurLevel = 3; 
     tint = 'rgba(27, 24, 27, 0.75)';
-  } else if (currentView === 'db' || currentView === 'actions' || currentView === 'search') {
-    blurLevel = 6;
-    tint = 'rgba(27, 24, 27, 0.85)';
-  } else if (currentView === 'dashboard') {
+  } else if (['db', 'actions', 'search', 'dashboard'].includes(currentView)) {
     blurLevel = 6;
     tint = 'rgba(27, 24, 27, 0.85)';
   }
 
-  // Συναρτήση για την ανάκτηση όλων των ενεργών καμπανιών από το API
   const fetchCampaigns = async () => {
     try {
       const res = await fetch('http://127.0.0.1:8000/api/campaigns');
@@ -67,7 +65,6 @@ function App() {
       setPendingRequestsCount(reqData.length || 0);
     } catch (e) { console.error(e); }
 
-    // Αν ο χρήστης είναι χορηγός, τραβάμε αυτόματα και τις καμπάνιες
     if (user.account_type === 'sponsor') {
       fetchCampaigns();
     }
@@ -119,6 +116,10 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 30px', boxSizing: 'border-box', position: 'relative', zIndex: 10}}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <button style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '2rem', cursor: 'pointer', padding: 0 }} onClick={() => setIsSidebarOpen(true)}>☰</button>
+              
+              {/* ΕΝΣΩΜΑΤΩΣΗ ΤΟΥ ΝΕΟΥ LOGO */}
+              <img src={logo} alt="RELEAF Logo" style={{ height: '55px', cursor: 'pointer', filter: 'drop-shadow(0px 2px 5px rgba(0,0,0,0.5))' }} onClick={() => { setCurrentView(loggedInUser ? 'dashboard' : 'home'); fetchDashboardData(loggedInUser); }} />
+              
               <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '3.5rem', margin: 0, letterSpacing: '2px', textShadow: '0px 2px 5px rgba(0,0,0,0.8)', cursor: 'pointer' }} onClick={() => { setCurrentView(loggedInUser ? 'dashboard' : 'home'); fetchDashboardData(loggedInUser); }}>RELEAF</h1>
             </div>
 
@@ -200,11 +201,9 @@ function App() {
               
               <div style={{ display: 'flex', gap: '30px', height: '65vh', width: '100%' }}>
                 
-                {/* ΑΡΙΣΤΕΡΗ ΣΤΗΛΗ */}
                 <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                     
-                    {/* ΔΥΝΑΜΙΚΑ ΚΟΥΜΠΙΑ ΑΝΑΛΟΓΑ ΜΕ ΤΟΝ ΤΥΠΟ ΧΡΗΣΤΗ */}
                     {loggedInUser.account_type === 'sponsor' ? (
                       <button className="releaf-button" style={{ background: '#4f46e5', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(79,70,229,0.3)', flex: 1 }} onClick={() => { setCurrentView('browse_campaigns'); fetchCampaigns(); }}>
                         💳 Καμπάνιες Χρηματοδότησης
@@ -235,15 +234,11 @@ function App() {
                     </button>
                   </div>
                   
-                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.4)', borderRadius: '20px', border: '2px dashed rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', color: '#888', fontSize: '1.2rem', textAlign: 'center', lineHeight: '1.6' }}>
-                      [ dashboard stats ] <br/> 
-                      <span style={{ fontSize: '0.9rem' }}>εδώ θα μπουν γραφήματα <br/>και η προσωπική σου πρόοδος.</span>
-                    </span>
-                  </div>
+                  {/* USE CASE 10 */}
+                  <EnvironmentalNeedsDashboard currentUser={loggedInUser} />
+
                 </div>
 
-                {/* ΔΕΞΙΑ ΣΤΗΛΗ */}
                 <div style={{ flex: '1.2', background: 'rgba(27, 24, 27, 0.85)', borderRadius: '20px', padding: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
                   <SearchActions currentUser={loggedInUser} />
                 </div>
@@ -258,7 +253,6 @@ function App() {
         </div>
       )}
 
-      {/* OVERLAYS & FORMS */}
       {currentView === 'register' && <RegistrationForm onBack={() => setCurrentView('home')} onComplete={() => {}} />}
       {currentView === 'login' && <LoginForm onBack={() => setCurrentView('home')} onLoginSuccess={handleLoginSuccess} />}
       {currentView === 'profile_edit' && loggedInUser && <ProfileEditForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} onUpdateSuccess={handleProfileUpdate} onLogout={handleLogout} />}
@@ -273,7 +267,6 @@ function App() {
         />
       )}
 
-      {/* USE CASE 9: ΟΘΟΝΗ ΑΝΑΖΗΤΗΣΗΣ / ΠΡΟΒΟΛΗΣ ΚΑΜΠΑΝΙΩΝ ΓΙΑ ΧΟΡΗΓΟΥΣ */}
       {currentView === 'browse_campaigns' && loggedInUser && (
         <div style={{ background: 'rgba(27, 24, 27, 0.95)', padding: '40px', borderRadius: '15px', width: '90%', maxWidth: '900px', height: '75vh', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
           <h3 style={{ fontFamily: 'var(--font-heading)', color: '#4f46e5', margin: '0 0 20px 0', fontSize: '1.8rem' }}>
@@ -301,7 +294,6 @@ function App() {
                         <span>Στόχος: €{c.goal_amount}</span>
                       </div>
                       
-                      {/* Μπάρα Προόδου */}
                       <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden', marginBottom: '15px' }}>
                         <div style={{ width: `${percentage}%`, height: '100%', background: '#4f46e5', transition: 'width 0.5s ease' }} />
                       </div>
@@ -326,9 +318,16 @@ function App() {
         </div>
       )}
 
+      {/* USE CASE 11: Render του Certificates Dashboard */}
+      {currentView === 'certificates' && loggedInUser && (
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <CertificatesDashboard currentUser={loggedInUser} />
+          <button className="releaf-button" style={{ position: 'absolute', bottom: '20px', background: 'transparent', border: '1px solid white' }} onClick={() => setCurrentView('dashboard')}>Επιστροφή</button>
+        </div>
+      )}
+
       {currentView === 'db' && <DatabaseViewer onBack={() => setCurrentView(loggedInUser ? 'dashboard' : 'home')} />}
 
-      {/* SIDEBAR */}
       {isSidebarOpen && <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 998 }} onClick={() => setIsSidebarOpen(false)} />}
       <div style={sidebarStyle}>
         <button style={{ position: 'absolute', top: '28px', left: '30px', background: 'transparent', border: 'none', fontSize: '2rem', cursor: 'pointer', color: '#1b181b', padding: 0, lineHeight: 1 }} onClick={() => setIsSidebarOpen(false)}>✕</button>
@@ -345,7 +344,6 @@ function App() {
               <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)', fontWeight: 'bold' }} onClick={() => { setCurrentView('dashboard'); setIsSidebarOpen(false); }}>▸ dashboard</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => { setCurrentView('profile_edit'); setIsSidebarOpen(false); }}>το προφίλ μου</li>
               
-              {/* ΔΥΝΑΜΙΚΟ ΜΕΝΟΥ SIDEBAR ΑΝΑΛΟΓΑ ΜΕ ΤΟ ACCOUNT TYPE */}
               {loggedInUser.account_type === 'sponsor' ? (
                 <li style={{ margin: '20px 0', cursor: 'pointer', color: '#4f46e5', fontWeight: 'bold' }} onClick={() => { setCurrentView('browse_campaigns'); fetchCampaigns(); setIsSidebarOpen(false); }}>💳 καμπάνιες χρηματοδότησης</li>
               ) : (
@@ -362,6 +360,11 @@ function App() {
                 </>
               )}
 
+              {/* USE CASE 11: Μενού Πιστοποιητικών μόνο για Εθελοντές */}
+              {loggedInUser.account_type === 'volunteer' && (
+                <li style={{ margin: '20px 0', cursor: 'pointer', color: '#10b981', fontWeight: 'bold' }} onClick={() => { setCurrentView('certificates'); setIsSidebarOpen(false); }}>🏆 τα πιστοποιητικά μου</li>
+              )}
+
               <li style={{ margin: '20px 0', cursor: 'pointer', color: '#10b981', fontWeight: 'bold' }} onClick={() => { setCurrentView('search'); setIsSidebarOpen(false); }}>🔍 αναζήτηση δράσεων</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => setIsSidebarOpen(false)}>μηνύματα</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => setIsSidebarOpen(false)}>ρυθμίσεις</li>
@@ -371,7 +374,7 @@ function App() {
         </ul>
       </div>
 
-      {/* USE CASE 9: ΕΜΦΑΝΙΣΗ MODAL ΠΛΗΡΩΜΗΣ (CHECKOUT) ΟΤΑΝ ΕΙΝΑΙ ΑΝΟΙΧΤΟ */}
+      {/* MODAL CHECKOUT ΓΙΑ USE CASE 9 */}
       {isCheckoutOpen && selectedCampaign && (
         <DonationCheckout 
           currentUser={loggedInUser} 
@@ -379,7 +382,7 @@ function App() {
           onClose={() => setIsCheckoutOpen(false)} 
           onSuccess={() => {
             setIsCheckoutOpen(false);
-            fetchCampaigns(); // Ανανέωση των ποσών μετά από επιτυχή δωρεά!
+            fetchCampaigns(); 
           }} 
         />
       )}

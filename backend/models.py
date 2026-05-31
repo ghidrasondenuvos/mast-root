@@ -68,7 +68,6 @@ class ParticipationRequest(Base):
     user = relationship("User")
     action = relationship("EnvironmentalAction")
 
-# --- ΝΕΟΣ ΠΙΝΑΚΑΣ ΓΙΑ ΕΙΔΟΠΟΙΗΣΕΙΣ (USE CASE 7) ---
 class Notification(Base):
     __tablename__ = "notifications"
     id = Column(Integer, primary_key=True, index=True)
@@ -77,7 +76,6 @@ class Notification(Base):
     
     user = relationship("User")
 
-    # --- ΝΕΟΣ ΠΙΝΑΚΑΣ ΓΙΑ ΤΟ USE CASE 8 (ΚΑΜΠΑΝΙΕΣ) ---
 class FundraisingCampaign(Base):
     __tablename__ = "fundraising_campaigns"
     id = Column(Integer, primary_key=True, index=True)
@@ -92,7 +90,7 @@ class FundraisingCampaign(Base):
     action = relationship("EnvironmentalAction")
     creator = relationship("User")
 
-    # --- USE CASE 9: ΔΩΡΕΕΣ & ΠΛΗΡΩΜΕΣ ---
+# --- USE CASE 9: ΔΩΡΕΕΣ & ΠΛΗΡΩΜΕΣ ---
 class Donation(Base):
     __tablename__ = "donations"
     id = Column(Integer, primary_key=True, index=True)
@@ -118,3 +116,36 @@ class Receipt(Base):
     receipt_number = Column(String, unique=True, index=True)
     
     donation = relationship("Donation")
+
+# --- USE CASE 10: ΑΝΑΛΥΣΗ ΔΕΔΟΜΕΝΩΝ & ΠΡΟΤΑΣΕΙΣ ΔΡΑΣΕΩΝ ---
+class EnvironmentalNeed(Base):
+    __tablename__ = "environmental_needs"
+    id = Column(Integer, primary_key=True, index=True)
+    location_id = Column(Integer, ForeignKey("locations.id"))
+    description = Column(String)
+    severity = Column(String, default="high") # π.χ. high, medium
+    
+    location = relationship("Location")
+
+class ActionProposal(Base):
+    __tablename__ = "action_proposals"
+    id = Column(Integer, primary_key=True, index=True)
+    need_id = Column(Integer, ForeignKey("environmental_needs.id"))
+    action_type_id = Column(Integer, ForeignKey("action_types.id"))
+    title = Column(String)
+    description = Column(String)
+    status = Column(String, default="proposed") # proposed, converted_to_action
+    
+    need = relationship("EnvironmentalNeed")
+    action_type = relationship("ActionType")
+
+    # --- USE CASE 11: ΠΙΣΤΟΠΟΙΗΤΙΚΑ ---
+class Certificate(Base):
+    __tablename__ = "certificates"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"))
+    action_id = Column(Integer, ForeignKey("environmental_actions.id"))
+    issue_date = Column(String)
+    
+    user = relationship("User")
+    action = relationship("EnvironmentalAction")

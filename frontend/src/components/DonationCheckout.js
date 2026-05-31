@@ -50,7 +50,6 @@ function DonationCheckout({ currentUser, campaign, onClose, onSuccess }) {
       
       <div style={{ background: '#fff', width: '100%', maxWidth: '450px', borderRadius: '12px', padding: '30px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', position: 'relative', overflow: 'hidden' }}>
         
-        {/* HEADER */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <h2 style={{ margin: 0, fontFamily: 'var(--font-heading)', color: '#1b181b', fontSize: '1.8rem' }}>RELEAF Pay</h2>
           <p style={{ margin: '5px 0 0 0', color: '#666', fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>
@@ -60,13 +59,11 @@ function DonationCheckout({ currentUser, campaign, onClose, onSuccess }) {
 
         {status === 'idle' || status === 'error' ? (
           <form onSubmit={handlePayment}>
-            {/* Amount */}
             <div style={{ position: 'relative' }}>
               <span style={{ position: 'absolute', left: '15px', top: '12px', color: '#666', fontWeight: 'bold' }}>€</span>
               <input type="number" required placeholder="Ποσό Δωρεάς" style={{ ...inputStyle, paddingLeft: '35px', fontWeight: 'bold', fontSize: '1.2rem' }} value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} min="1" />
             </div>
 
-            {/* Card Details (Mocked UI) */}
             <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #e9ecef', marginBottom: '20px' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', color: '#495057', marginBottom: '5px', fontWeight: 'bold' }}>Στοιχεία Κάρτας</label>
               <input type="text" required placeholder="Αριθμός Κάρτας (16 ψηφία)" style={inputStyle} value={form.card_number} onChange={e => setForm({...form, card_number: e.target.value})} maxLength="16" />
