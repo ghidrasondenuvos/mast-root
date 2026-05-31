@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import BackgroundWrapper from './components/BackgroundWrapper';
 import RegistrationForm from './components/RegistrationForm';
 import LoginForm from './components/LoginForm';
-import ProfileEditForm from './components/ProfileEditForm'; // ΝΕΟ IMPORT
+import ProfileEditForm from './components/ProfileEditForm';
 import DatabaseViewer from './components/DatabaseViewer';
+import CreateActionForm from './components/CreateActionForm';
 
 import treeGif from './assets/tree.gif'; 
-import bellIcon from './assets/bell.png'; // ΝΕΟ: Εισαγωγή του Bell icon
+import bellIcon from './assets/bell.png';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
@@ -19,7 +20,7 @@ function App() {
   let blurLevel = 15; 
   let tint = 'rgba(27, 24, 27, 0.4)';
 
-  if (currentView === 'register' || currentView === 'login' || currentView === 'profile_edit') {
+  if (currentView === 'register' || currentView === 'login' || currentView === 'profile_edit' || currentView === 'create_action') {
     blurLevel = 3; 
     tint = 'rgba(27, 24, 27, 0.75)';
   } else if (currentView === 'db' || currentView === 'actions') {
@@ -85,7 +86,6 @@ function App() {
                 </>
               ) : (
                 <>
-                  {/* ΚΑΜΠΑΝΑΚΙ: Τώρα με την εικόνα bell.png */}
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <button 
                       style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, position: 'relative', display: 'flex' }}
@@ -114,7 +114,6 @@ function App() {
                     )}
                   </div>
 
-                  {/* ΕΙΚΟΝΙΔΙΟ ΠΡΟΦΙΛ: Τώρα είναι clickable και ανοίγει τη Φόρμα! */}
                   <div 
                     onClick={() => setCurrentView('profile_edit')}
                     style={{ 
@@ -165,7 +164,26 @@ function App() {
               <h2 style={{ fontFamily: 'var(--font-mono)', color: '#fff', fontSize: '1.6rem', marginBottom: '10px', textShadow: '0px 2px 5px rgba(0,0,0,0.8)' }}>
                 καλώς ήρθες, <span style={{ color: '#10b981' }}>{loggedInUser.username}</span>!
               </h2>
-              <p style={{ fontFamily: 'var(--font-mono)', color: '#ddd', fontSize: '1rem', marginBottom: '40px' }}>εδώ θα μπορείς να ελέγχεις την πρόοδό σου και τις δράσεις σου.</p>
+              <p style={{ fontFamily: 'var(--font-mono)', color: '#ddd', fontSize: '1rem', marginBottom: '20px' }}>εδώ θα μπορείς να ελέγχεις την πρόοδό σου και τις δράσεις σου.</p>
+              
+              {/* ΤΑ ΝΕΑ ΚΟΥΜΠΙΑ ΣΤΟ DASHBOARD */}
+              <div style={{ display: 'flex', gap: '15px', marginBottom: '30px' }}>
+                <button 
+                  className="releaf-button" 
+                  style={{ background: '#10b981', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(16,185,129,0.3)' }} 
+                  onClick={() => setCurrentView('create_action')}
+                >
+                  + δημιουργία δράσης
+                </button>
+                <button 
+                  className="releaf-button" 
+                  style={{ background: 'transparent', border: '1px solid var(--accent-color)', color: 'var(--accent-color)' }} 
+                  onClick={() => setCurrentView('db')}
+                >
+                  🛠️ db admin
+                </button>
+              </div>
+
               <div style={{ width: '100%', maxWidth: '900px', height: '400px', background: 'rgba(0,0,0,0.4)', borderRadius: '20px', border: '2px dashed rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
                 <span style={{ fontFamily: 'var(--font-mono)', color: '#888', fontSize: '1.2rem', textAlign: 'center', lineHeight: '1.6' }}>
                   [ dashboard placeholder ] <br/> 
@@ -186,7 +204,6 @@ function App() {
       {currentView === 'register' && <RegistrationForm onBack={() => setCurrentView('home')} onComplete={() => {}} />}
       {currentView === 'login' && <LoginForm onBack={() => setCurrentView('home')} onLoginSuccess={handleLoginSuccess} />}
       
-      {/* ΝΕΑ ΦΟΡΜΑ ΕΠΕΞΕΡΓΑΣΙΑΣ */}
       {currentView === 'profile_edit' && loggedInUser && (
         <ProfileEditForm 
           currentUser={loggedInUser} 
@@ -195,7 +212,14 @@ function App() {
         />
       )}
 
-      {currentView === 'db' && <DatabaseViewer onBack={() => setCurrentView('home')} />}
+      {currentView === 'create_action' && loggedInUser && (
+        <CreateActionForm 
+          currentUser={loggedInUser} 
+          onBack={() => setCurrentView('dashboard')} 
+        />
+      )}
+
+      {currentView === 'db' && <DatabaseViewer onBack={() => setCurrentView(loggedInUser ? 'dashboard' : 'home')} />}
 
       {/* SIDEBAR OVERLAY */}
       {isSidebarOpen && <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 998 }} onClick={() => setIsSidebarOpen(false)} />}
@@ -215,7 +239,12 @@ function App() {
             <>
               <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)', fontWeight: 'bold' }} onClick={() => { setCurrentView('dashboard'); setIsSidebarOpen(false); }}>▸ dashboard</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => { setCurrentView('profile_edit'); setIsSidebarOpen(false); }}>το προφίλ μου</li>
-              <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => setIsSidebarOpen(false)}>οι δράσεις μου</li>
+              
+              <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)' }} 
+              onClick={() => { setCurrentView('create_action'); setIsSidebarOpen(false); }}>
+              + δημιουργία δράσης
+              </li>
+              
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => setIsSidebarOpen(false)}>μηνύματα</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => setIsSidebarOpen(false)}>ρυθμίσεις</li>
               <li style={{ margin: '20px 0', marginTop: '40px', cursor: 'pointer', color: '#ff4d4d', fontWeight: 'bold' }} onClick={() => { handleLogout(); setIsSidebarOpen(false); }}>αποσύνδεση</li>

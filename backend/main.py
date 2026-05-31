@@ -164,3 +164,82 @@ def view_database(db: Session = Depends(database.get_db)):
             "resources": volunteer.resources if volunteer else "-"
         })
     return result
+
+@app.get("/api/db-actions")
+def view_actions(db: Session = Depends(database.get_db)):
+    actions = db.query(models.EnvironmentalAction).all()
+    result = []
+    for a in actions:
+        result.append({
+            "id": a.id,
+            "title": a.title,
+            "description": a.description,
+            "max_participants": a.max_participants,
+            "location": a.location.name if a.location else "-",
+            "action_type": a.action_type.name if a.action_type else "-",
+            "organisation": a.organisation.name if a.organisation else "-"
+        })
+    return result
+
+# 1. Προσθήκη του Pydantic Schema για τη δημιουργία δράσης
+class ActionCreate(BaseModel):
+    title: str = Field(..., min_length=3)
+    description: str
+    max_participants: int = Field(..., gte=1)
+    location_name: str
+    action_type_name: str
+    creator_user_id: int  # Θα το περνάμε από το loggedInUser της React
+
+# 2. Το Endpoint για το Use Case 4
+# Το Pydantic Schema για τη δημιουργία δράσης (αν δεν το έχεις ήδη)
+class ActionCreate(BaseModel):
+    title: str = Field(..., min_length=3)
+    description: str
+    max_participants: int = Field(..., gte=1)
+    location_name: str
+    action_type_name: str
+    creator_user_id: int
+
+@app.post("/actions")
+def create_environmental_action(data: ActionCreate, db: Session = Depends(database.get_db)):
+    try:
+        # --- 1. ΕΛΕΓΧΟΣ Ή ΔΗΜΙΟΥΡΓΙΑ ΤΟΠΟΘΕΣΙΑΣ ---
+        location = db.query(models.Location).filter(models.Location.name.ilike(data.location_name)).first()
+        if not location:
+            location = models.Location(name=data.location_name)
+            db.add(location)
+            db.flush()
+
+        # --- 2. ΕΛΕΓΧΟΣ Ή ΔΗΜΙΟΥΡΓΙΑ ΤΥΠΟΥ ΔΡΑΣΗΣ ---
+        action_type = db.query(models.ActionType).filter(models.ActionType.name.ilike(data.action_type_name)).first()
+        if not action_type:
+            action_type = models.ActionType(name=data.action_type_name)
+            db.add(action_type)
+            db.flush()
+
+        # --- 3. ΕΛΕΓΧΟΣ Ή ΔΗΜΙΟΥΡΓΙΑ ΟΡΓΑΝΙΣΜΟΥ ---
+        org = db.query(models.Organisation).filter(models.Organisation.user_id == data.creator_user_id).first()
+        if not org:
+            user_profile = db.query(models.Profile).filter(models.Profile.user_id == data.creator_user_id).first()
+            org_name = user_profile.full_name if user_profile else f"Οργανισμός User {data.creator_user_id}"
+            org = models.Organisation(user_id=data.creator_user_id, name=org_name)
+            db.add(org)
+            db.flush()
+
+        # --- 4. ΔΗΜΙΟΥΡΓΙΑ ΤΗΣ ΔΡΑΣΗΣ ---
+        new_action = models.EnvironmentalAction(
+            title=data.title,
+            description=data.description,
+            max_participants=data.max_participants,
+            location_id=location.id,
+            action_type_id=action_type.id,
+            organisation_id=org.id
+        )
+        
+        db.add(new_action)
+        db.commit()
+        return {"status": "success", "message": f"Η δράση '{data.title}' καταχωρήθηκε επιτυχώς!"}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Σφάλμα Συστήματος: {str(e)}")
