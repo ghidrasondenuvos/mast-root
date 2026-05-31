@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import BackgroundWrapper from './components/BackgroundWrapper';
 import RegistrationForm from './components/RegistrationForm';
 import LoginForm from './components/LoginForm';
 import ProfileEditForm from './components/ProfileEditForm';
 import DatabaseViewer from './components/DatabaseViewer';
 import CreateActionForm from './components/CreateActionForm';
-import SearchActions from './components/SearchActions'; // ΝΕΟ IMPORT: USE CASE 5
+import SearchActions from './components/SearchActions'; 
+import ManageRequests from './components/ManageRequests';
 
 import treeGif from './assets/tree.gif'; 
 import bellIcon from './assets/bell.png';
@@ -13,7 +14,10 @@ import bellIcon from './assets/bell.png';
 function App() {
   const [currentView, setCurrentView] = useState('home');
   const [loggedInUser, setLoggedInUser] = useState(null);
+  
+  // States για Ειδοποιήσεις και Counters
   const [notifications, setNotifications] = useState([]);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -21,7 +25,7 @@ function App() {
   let blurLevel = 15; 
   let tint = 'rgba(27, 24, 27, 0.4)';
 
-  if (currentView === 'register' || currentView === 'login' || currentView === 'profile_edit' || currentView === 'create_action') {
+  if (currentView === 'register' || currentView === 'login' || currentView === 'profile_edit' || currentView === 'create_action' || currentView === 'manage_requests') {
     blurLevel = 3; 
     tint = 'rgba(27, 24, 27, 0.75)';
   } else if (currentView === 'db' || currentView === 'actions' || currentView === 'search') {
@@ -29,23 +33,43 @@ function App() {
     tint = 'rgba(27, 24, 27, 0.85)';
   } else if (currentView === 'dashboard') {
     blurLevel = 6;
-    tint = 'rgba(27, 24, 27, 0.85)'; // Πιο σκούρο για να διαβάζεται τέλεια η αναζήτηση
+    tint = 'rgba(27, 24, 27, 0.85)';
   }
 
+  // ΑΛΛΑΓΗ: Τώρα τραβάει τις αιτήσεις για ΟΛΟΥΣ τους χρήστες (ανεξαρτήτως ρόλου) 
+  // αρκεί βέβαια να έχουν δημιουργήσει κάποια δράση.
+  const fetchDashboardData = async (user) => {
+    if (!user) return;
+    
+    // Τραβάμε Ειδοποιήσεις
+    try {
+      const notifRes = await fetch(`http://127.0.0.1:8000/api/notifications/${user.id}`);
+      const notifData = await notifRes.json();
+      setNotifications(notifData);
+    } catch (e) { console.error(e); }
 
-  
-  const handleLoginSuccess = (user, notifs) => {
+    // Τραβάμε Αιτήσεις Συμμετοχής για τις Δράσεις ΤΟΥ (αφαιρέθηκε το if organisation)
+    try {
+      const reqRes = await fetch(`http://127.0.0.1:8000/api/org-requests/${user.id}`);
+      const reqData = await reqRes.json();
+      setPendingRequestsCount(reqData.length || 0);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleLoginSuccess = (user) => {
     setLoggedInUser(user);
-    
-    // Αν δεν έρθουν αληθινές ειδοποιήσεις από τον server, βάζουμε 3 δικές μας!
-    const defaultNotifications = notifs || [
-      { id: 1, text: 'Καλώς ήρθες ξανά στο Releaf!' },
-      { id: 2, text: 'Μια νέα δράση δενδροφύτευσης προστέθηκε κοντά σου.' },
-      { id: 3, text: 'Μην ξεχάσεις να συμπληρώσεις τις δεξιότητές σου.' }
-    ];
-    
-    setNotifications(defaultNotifications); 
     setCurrentView('dashboard'); 
+    fetchDashboardData(user); 
+  };
+
+  const toggleNotifications = async () => {
+    setIsNotifOpen(!isNotifOpen);
+    if (!isNotifOpen && notifications.length > 0) {
+      try {
+        await fetch(`http://127.0.0.1:8000/api/notifications/${loggedInUser.id}`, { method: 'DELETE' });
+        setTimeout(() => setNotifications([]), 5000); 
+      } catch (e) { console.error(e); }
+    }
   };
 
   const handleProfileUpdate = (updatedUser) => {
@@ -56,23 +80,15 @@ function App() {
   const handleLogout = () => {
     setLoggedInUser(null);
     setNotifications([]);
+    setPendingRequestsCount(0);
     setIsNotifOpen(false); 
     setCurrentView('home');
   };
 
   const sidebarStyle = {
-    position: 'fixed',
-    top: 0,
-    left: isSidebarOpen ? 0 : '-300px',
-    width: '260px',
-    height: '100vh',
-    background: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(15px)',
-    transition: 'left 0.3s ease-in-out',
-    zIndex: 1000,
-    padding: '30px',
-    boxSizing: 'border-box',
-    color: '#1b181b',
+    position: 'fixed', top: 0, left: isSidebarOpen ? 0 : '-300px', width: '260px', height: '100vh',
+    background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(15px)', transition: 'left 0.3s ease-in-out',
+    zIndex: 1000, padding: '30px', boxSizing: 'border-box', color: '#1b181b',
     boxShadow: isSidebarOpen ? '5px 0 20px rgba(0,0,0,0.5)' : 'none'
   };
 
@@ -85,11 +101,10 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 30px', boxSizing: 'border-box', position: 'relative', zIndex: 10}}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <button style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '2rem', cursor: 'pointer', padding: 0 }} onClick={() => setIsSidebarOpen(true)}>☰</button>
-              <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '3.5rem', margin: 0, letterSpacing: '2px', textShadow: '0px 2px 5px rgba(0,0,0,0.8)', cursor: 'pointer' }} onClick={() => setCurrentView(loggedInUser ? 'dashboard' : 'home')}>RELEAF</h1>
+              <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '3.5rem', margin: 0, letterSpacing: '2px', textShadow: '0px 2px 5px rgba(0,0,0,0.8)', cursor: 'pointer' }} onClick={() => { setCurrentView(loggedInUser ? 'dashboard' : 'home'); fetchDashboardData(loggedInUser); }}>RELEAF</h1>
             </div>
 
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-              
               {!loggedInUser ? (
                 <>
                   <button className="releaf-button" style={{ background: '#10b981', color: '#fff', fontWeight: 'bold', margin: 0, padding: '8px 18px', fontSize: '0.85rem' }} onClick={() => setCurrentView('register')}>εγγραφή</button>
@@ -98,12 +113,8 @@ function App() {
               ) : (
                 <>
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <button 
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, position: 'relative', display: 'flex' }}
-                      onClick={() => setIsNotifOpen(!isNotifOpen)}
-                    >
+                    <button style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, position: 'relative', display: 'flex' }} onClick={toggleNotifications}>
                       <img src={bellIcon} alt="Ειδοποιήσεις" style={{ width: '32px', height: '32px' }} />
-                      
                       {notifications.length > 0 && (
                         <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ff4d4d', color: 'white', borderRadius: '50%', width: '18px', height: '18px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                           {notifications.length}
@@ -125,18 +136,7 @@ function App() {
                     )}
                   </div>
 
-                  <div 
-                    onClick={() => setCurrentView('profile_edit')}
-                    style={{ 
-                      width: '45px', height: '45px', borderRadius: '50%', background: 'var(--accent-color)', 
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', 
-                      fontWeight: 'bold', color: 'white', cursor: 'pointer', border: '2px solid rgba(255,255,255,0.2)',
-                      transition: 'transform 0.2s ease'
-                    }} 
-                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                    title="Επεξεργασία Προφίλ"
-                  >
+                  <div onClick={() => setCurrentView('profile_edit')} style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: 'bold', color: 'white', cursor: 'pointer', border: '2px solid rgba(255,255,255,0.2)', transition: 'transform 0.2s ease' }}>
                     {loggedInUser.username.charAt(0).toUpperCase()}
                   </div>
                 </>
@@ -170,7 +170,6 @@ function App() {
             </div>
           )}
 
-          {/* ΤΟ ΝΕΟ "ΔΙΠΛΟ" DASHBOARD (USE CASE 5 ΕΝΣΩΜΑΤΩΜΕΝΟ ΔΕΞΙΑ) */}
           {currentView === 'dashboard' && loggedInUser && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '1300px', margin: '0 auto', padding: '0 30px', boxSizing: 'border-box', marginTop: '-2vh' }}>
               
@@ -181,13 +180,24 @@ function App() {
               
               <div style={{ display: 'flex', gap: '30px', height: '65vh', width: '100%' }}>
                 
-                {/* ΑΡΙΣΤΕΡΗ ΣΤΗΛΗ: Κουμπιά & Στατιστικά */}
+                {/* ΑΡΙΣΤΕΡΗ ΣΤΗΛΗ */}
                 <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                     <button className="releaf-button" style={{ background: '#10b981', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(16,185,129,0.3)', flex: 1 }} onClick={() => setCurrentView('create_action')}>
                       + δημιουργία δράσης
                     </button>
-                    <button className="releaf-button" style={{ background: 'transparent', border: '1px solid var(--accent-color)', color: 'var(--accent-color)', flex: 1 }} onClick={() => setCurrentView('db')}>
+
+                    {/* ΑΛΛΑΓΗ: Το κουμπί είναι ορατό σε ΟΛΟΥΣ τους χρήστες πλέον! */}
+                    <button className="releaf-button" style={{ position: 'relative', background: 'var(--accent-color)', color: 'white', flex: 1 }} onClick={() => setCurrentView('manage_requests')}>
+                      διαχείριση αιτήσεων
+                      {pendingRequestsCount > 0 && (
+                        <span style={{ position: 'absolute', top: '-10px', right: '-10px', background: '#ff4d4d', color: 'white', borderRadius: '50%', width: '25px', height: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                          {pendingRequestsCount}
+                        </span>
+                      )}
+                    </button>
+                    
+                    <button className="releaf-button" style={{ background: 'transparent', border: '1px solid var(--accent-color)', color: 'var(--accent-color)' }} onClick={() => setCurrentView('db')}>
                       🛠️ db admin
                     </button>
                   </div>
@@ -200,11 +210,10 @@ function App() {
                   </div>
                 </div>
 
-                {/* ΔΕΞΙΑ ΣΤΗΛΗ: Το Component Αναζήτησης! */}
+                {/* ΔΕΞΙΑ ΣΤΗΛΗ (Search) */}
                 <div style={{ flex: '1.2', background: 'rgba(27, 24, 27, 0.85)', borderRadius: '20px', padding: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
-                  <SearchActions />
+                  <SearchActions currentUser={loggedInUser} />
                 </div>
-
               </div>
             </div>
           )}
@@ -216,32 +225,31 @@ function App() {
         </div>
       )}
 
-      {/* ΦΟΡΜΕΣ ΣΕ ΠΛΗΡΗ ΟΘΟΝΗ (OVERLAYS) */}
+      {/* OVERLAYS */}
       {currentView === 'register' && <RegistrationForm onBack={() => setCurrentView('home')} onComplete={() => {}} />}
       {currentView === 'login' && <LoginForm onBack={() => setCurrentView('home')} onLoginSuccess={handleLoginSuccess} />}
+      {currentView === 'profile_edit' && loggedInUser && <ProfileEditForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} onUpdateSuccess={handleProfileUpdate} />}
+      {currentView === 'create_action' && loggedInUser && <CreateActionForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} />}
       
-      {currentView === 'profile_edit' && loggedInUser && (
-        <ProfileEditForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} onUpdateSuccess={handleProfileUpdate} />
+      {currentView === 'manage_requests' && loggedInUser && (
+        <ManageRequests 
+          currentUser={loggedInUser} 
+          onBack={() => setCurrentView('dashboard')} 
+          onRequestHandled={() => fetchDashboardData(loggedInUser)} 
+        />
       )}
 
-      {currentView === 'create_action' && loggedInUser && (
-        <CreateActionForm currentUser={loggedInUser} onBack={() => setCurrentView('dashboard')} />
-      )}
-
-      {/* STANDALONE VIEW ΑΝΑΖΗΤΗΣΗΣ (Αν πατήσεις από το Sidebar ενώ ΔΕΝ είσαι στο Dashboard) */}
       {currentView === 'search' && loggedInUser && (
-        <div style={{ background: 'rgba(27, 24, 27, 0.95)', padding: '40px', borderRadius: '15px', width: '90%', maxWidth: '800px', height: '70vh', backdropFilter: 'blur(10px)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
-          <SearchActions />
-          <button className="releaf-button" style={{ marginTop: '20px', alignSelf: 'center', background: 'transparent', border: '1px solid white' }} onClick={() => setCurrentView('dashboard')}>Επιστροφή στο Dashboard</button>
+        <div style={{ background: 'rgba(27, 24, 27, 0.95)', padding: '40px', borderRadius: '15px', width: '90%', maxWidth: '800px', height: '70vh', display: 'flex', flexDirection: 'column' }}>
+          <SearchActions currentUser={loggedInUser} />
+          <button className="releaf-button" style={{ marginTop: '20px', alignSelf: 'center', background: 'transparent', border: '1px solid white' }} onClick={() => setCurrentView('dashboard')}>Επιστροφή</button>
         </div>
       )}
 
       {currentView === 'db' && <DatabaseViewer onBack={() => setCurrentView(loggedInUser ? 'dashboard' : 'home')} />}
 
-      {/* SIDEBAR OVERLAY */}
-      {isSidebarOpen && <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 998 }} onClick={() => setIsSidebarOpen(false)} />}
-
       {/* SIDEBAR */}
+      {isSidebarOpen && <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 998 }} onClick={() => setIsSidebarOpen(false)} />}
       <div style={sidebarStyle}>
         <button style={{ position: 'absolute', top: '28px', left: '30px', background: 'transparent', border: 'none', fontSize: '2rem', cursor: 'pointer', color: '#1b181b', padding: 0, lineHeight: 1 }} onClick={() => setIsSidebarOpen(false)}>✕</button>
         <h3 style={{ fontFamily: 'var(--font-heading)', marginTop: '80px', fontSize: '1.5rem', borderBottom: '2px solid var(--accent-color)', paddingBottom: '10px' }}>μενού</h3>
@@ -256,16 +264,17 @@ function App() {
             <>
               <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)', fontWeight: 'bold' }} onClick={() => { setCurrentView('dashboard'); setIsSidebarOpen(false); }}>▸ dashboard</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => { setCurrentView('profile_edit'); setIsSidebarOpen(false); }}>το προφίλ μου</li>
+              <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)' }} onClick={() => { setCurrentView('create_action'); setIsSidebarOpen(false); }}>+ δημιουργία δράσης</li>
               
-              <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)' }} onClick={() => { setCurrentView('create_action'); setIsSidebarOpen(false); }}>
-                + δημιουργία δράσης
+              {/* ΑΛΛΑΓΗ ΣΤΟ SIDEBAR: Ορατό σε όλους (Αν δεν έχουν δράσεις απλά δε θα χει αιτήσεις) */}
+              <li style={{ margin: '20px 0', cursor: 'pointer', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => { setCurrentView('manage_requests'); setIsSidebarOpen(false); }}>
+                διαχείριση αιτήσεων
+                {pendingRequestsCount > 0 && (
+                  <span style={{ background: '#ff4d4d', color: 'white', borderRadius: '50%', padding: '2px 8px', fontSize: '0.8rem', fontWeight: 'bold' }}>{pendingRequestsCount}</span>
+                )}
               </li>
 
-              {/* ΝΕΟ ΚΟΥΜΠΙ ΣΤΟ SIDEBAR: Αναζήτηση */}
-              <li style={{ margin: '20px 0', cursor: 'pointer', color: '#10b981', fontWeight: 'bold' }} onClick={() => { setCurrentView('search'); setIsSidebarOpen(false); }}>
-                🔍 αναζήτηση δράσεων
-              </li>
-              
+              <li style={{ margin: '20px 0', cursor: 'pointer', color: '#10b981', fontWeight: 'bold' }} onClick={() => { setCurrentView('search'); setIsSidebarOpen(false); }}>🔍 αναζήτηση δράσεων</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => setIsSidebarOpen(false)}>μηνύματα</li>
               <li style={{ margin: '20px 0', cursor: 'pointer' }} onClick={() => setIsSidebarOpen(false)}>ρυθμίσεις</li>
               <li style={{ margin: '20px 0', marginTop: '40px', cursor: 'pointer', color: '#ff4d4d', fontWeight: 'bold' }} onClick={() => { handleLogout(); setIsSidebarOpen(false); }}>αποσύνδεση</li>

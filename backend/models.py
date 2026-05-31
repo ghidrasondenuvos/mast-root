@@ -27,29 +27,21 @@ class VolunteerProfile(Base):
     resources = Column(String)
     profile = relationship("Profile", back_populates="volunteer")
 
-    from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
-from database import Base
-
-# ... (Κρατάς τους υπάρχοντες πίνακες User, Profile, VolunteerProfile)
-
 class Location(Base):
     __tablename__ = "locations"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)  # π.χ. "Πάτρα", "Αθήνα"
+    name = Column(String, unique=True, index=True)
 
 class ActionType(Base):
     __tablename__ = "action_types"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)  # π.χ. "Δενδροφύτευση", "Καθαρισμός Ακτής"
+    name = Column(String, unique=True, index=True)
 
 class Organisation(Base):
     __tablename__ = "organisations"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.user_id"))
     name = Column(String, index=True)
-    
-    user = relationship("User")
 
 class EnvironmentalAction(Base):
     __tablename__ = "environmental_actions"
@@ -58,12 +50,29 @@ class EnvironmentalAction(Base):
     description = Column(String)
     max_participants = Column(Integer, default=0)
     
-    # Ξένα Κλειδιά / Συνδέσεις (Use Case Requirements)
     location_id = Column(Integer, ForeignKey("locations.id"))
     action_type_id = Column(Integer, ForeignKey("action_types.id"))
     organisation_id = Column(Integer, ForeignKey("organisations.id"))
     
-    # Relationships για εύκολη ανάκτηση δεδομένων
     location = relationship("Location")
     action_type = relationship("ActionType")
     organisation = relationship("Organisation")
+
+class ParticipationRequest(Base):
+    __tablename__ = "participation_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"))
+    action_id = Column(Integer, ForeignKey("environmental_actions.id"))
+    status = Column(String, default="pending") # pending, approved, rejected
+    
+    user = relationship("User")
+    action = relationship("EnvironmentalAction")
+
+# --- ΝΕΟΣ ΠΙΝΑΚΑΣ ΓΙΑ ΕΙΔΟΠΟΙΗΣΕΙΣ (USE CASE 7) ---
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"))
+    text = Column(String)
+    
+    user = relationship("User")

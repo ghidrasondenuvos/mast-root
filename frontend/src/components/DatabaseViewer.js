@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 function DatabaseViewer({ onBack }) {
   const [users, setUsers] = useState([]);
   const [actions, setActions] = useState([]);
-  const [activeTab, setActiveTab] = useState('users'); // 'users' ή 'actions'
+  const [requests, setRequests] = useState([]); // ΝΕΟ State για τις αιτήσεις
+  const [activeTab, setActiveTab] = useState('users'); // 'users', 'actions' ή 'requests'
 
   useEffect(() => {
     // Φόρτωση Χρηστών
@@ -17,9 +18,14 @@ function DatabaseViewer({ onBack }) {
       .then(res => res.json())
       .then(data => setActions(data))
       .catch(err => console.error(err));
+
+    // Φόρτωση Αιτήσεων (ΝΕΟ)
+    fetch('http://127.0.0.1:8000/api/db-requests')
+      .then(res => res.json())
+      .then(data => setRequests(data))
+      .catch(err => console.error(err));
   }, []);
 
-  // Κοινά στυλ για τα compact κελιά του πίνακα
   const thStyle = { padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,0.2)' };
   const tdStyle = { padding: '8px 10px', fontSize: '0.85rem' };
 
@@ -45,12 +51,20 @@ function DatabaseViewer({ onBack }) {
           >
             Δράσεις
           </button>
+          
+          {/* ΝΕΟ ΚΟΥΜΠΙ "ΑΙΤΗΣΕΙΣ" */}
+          <button 
+            style={{ padding: '5px 15px', background: activeTab === 'requests' ? '#4f46e5' : 'transparent', color: '#fff', border: '1px solid #4f46e5', borderRadius: '5px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }} 
+            onClick={() => setActiveTab('requests')}
+          >
+            Αιτήσεις
+          </button>
         </div>
 
         <button className="releaf-button" style={{ padding: '5px 15px', fontSize: '0.9rem' }} onClick={onBack}>κλείσιμο</button>
       </div>
       
-      {/* ΠΙΝΑΚΑΣ (COMPACT DESIGN) */}
+      {/* ΠΙΝΑΚΑΣ */}
       <div style={{ overflowY: 'auto', flex: 1, background: 'rgba(0,0,0,0.3)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
         <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)' }}>
           
@@ -61,6 +75,7 @@ function DatabaseViewer({ onBack }) {
                 <tr style={{ color: 'var(--accent-color)', fontSize: '0.85rem' }}>
                   <th style={thStyle}>id</th>
                   <th style={thStyle}>username</th>
+                  <th style={thStyle}>password</th> {/* ΕΠΑΝΑΦΟΡΑ ΚΩΔΙΚΟΥ */}
                   <th style={thStyle}>email</th>
                   <th style={thStyle}>full_name</th>
                   <th style={thStyle}>type</th>
@@ -73,6 +88,7 @@ function DatabaseViewer({ onBack }) {
                   <tr key={u.id} style={{ background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.03)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background='rgba(166,124,82,0.15)'} onMouseLeave={e => e.currentTarget.style.background= index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.03)'}>
                     <td style={tdStyle}>{u.id}</td>
                     <td style={tdStyle}>{u.username}</td>
+                    <td style={{ ...tdStyle, color: '#ff4d4d' }}>{u.password}</td> {/* ΕΜΦΑΝΙΣΗ ΚΩΔΙΚΟΥ ΜΕ ΚΟΚΚΙΝΟ ΧΡΩΜΑ */}
                     <td style={tdStyle}>{u.email}</td>
                     <td style={tdStyle}>{u.full_name}</td>
                     <td style={{ ...tdStyle, fontWeight: 'bold' }}>{u.account_type}</td>
@@ -110,6 +126,40 @@ function DatabaseViewer({ onBack }) {
                     <td style={{ ...tdStyle, color: '#10b981' }}>{a.organisation}</td>
                   </tr>
                 ))}
+              </tbody>
+            </>
+          )}
+
+          {/* ΚΑΡΤΕΛΑ: ΑΙΤΗΣΕΙΣ */}
+          {activeTab === 'requests' && (
+            <>
+              <thead style={{ position: 'sticky', top: 0, background: '#1b181b', zIndex: 1 }}>
+                <tr style={{ color: '#4f46e5', fontSize: '0.85rem' }}>
+                  <th style={thStyle}>id</th>
+                  <th style={thStyle}>εθελοντής</th>
+                  <th style={thStyle}>τίτλος δράσης</th>
+                  <th style={thStyle}>κατάσταση (status)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {requests.length === 0 ? (
+                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#888' }}>Δεν βρέθηκαν αιτήσεις.</td></tr>
+                ) : (
+                  requests.map((r, index) => (
+                    <tr key={r.id} style={{ background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.03)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background='rgba(79, 70, 229, 0.15)'} onMouseLeave={e => e.currentTarget.style.background= index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.03)'}>
+                      <td style={tdStyle}>{r.id}</td>
+                      <td style={{ ...tdStyle, fontWeight: 'bold' }}>{r.volunteer_name}</td>
+                      <td style={tdStyle}>{r.action_title}</td>
+                      <td style={{ 
+                        ...tdStyle, 
+                        color: r.status === 'approved' ? '#10b981' : r.status === 'rejected' ? '#ff4d4d' : '#fbbf24',
+                        fontWeight: 'bold'
+                      }}>
+                        {r.status.toUpperCase()}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </>
           )}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function ProfileEditForm({ currentUser, onBack, onUpdateSuccess }) {
+function ProfileEditForm({ currentUser, onBack, onUpdateSuccess, onLogout }) {
   // Αρχικοποιούμε τη φόρμα με τα ΗΔΗ ΥΠΑΡΧΟΝΤΑ στοιχεία
   const [form, setForm] = useState({
     user_id: currentUser.id,
@@ -27,7 +27,7 @@ function ProfileEditForm({ currentUser, onBack, onUpdateSuccess }) {
 
     try {
       const res = await fetch('http://127.0.0.1:8000/update-profile', {
-        method: 'PUT', // Χρησιμοποιούμε PUT για ενημέρωση
+        method: 'PUT',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(form)
       });
@@ -36,7 +36,6 @@ function ProfileEditForm({ currentUser, onBack, onUpdateSuccess }) {
       if(res.ok) {
         setResult({ status: 'success', message: 'επιτυχής τροποποίηση!' });
         setStep(2);
-        // Ανανεώνουμε το session στο App.js μετά από λίγο
         setTimeout(() => {
           onUpdateSuccess(data.user);
         }, 1500);
@@ -74,7 +73,20 @@ function ProfileEditForm({ currentUser, onBack, onUpdateSuccess }) {
             
             <button className="releaf-button" type="submit" style={{ marginTop: '15px' }}>αποθήκευση αλλαγών</button>
           </form>
+          
           <button className="releaf-button" type="button" style={{ background: 'transparent', border: '1px solid white', marginTop: '10px' }} onClick={onBack}>ακύρωση</button>
+
+          {/* ΝΕΟ: Κουμπί Αποσύνδεσης (Logout) */}
+          <div style={{ marginTop: '25px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <button 
+              className="releaf-button" 
+              type="button" 
+              style={{ background: 'transparent', border: '1px solid #ff4d4d', color: '#ff4d4d', width: '100%', margin: 0, boxSizing: 'border-box', fontWeight: 'bold' }} 
+              onClick={onLogout}
+            >
+              αποσύνδεση
+            </button>
+          </div>
         </>
       )}
 
@@ -92,4 +104,5 @@ function ProfileEditForm({ currentUser, onBack, onUpdateSuccess }) {
     </div>
   );
 }
+
 export default ProfileEditForm;
