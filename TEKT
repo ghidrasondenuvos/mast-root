@@ -1,0 +1,20 @@
+ctrl shift ` 5
+
+cd backend
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+python -m venv venv
+.\venv\Scripts\activate
+pip install fastapi uvicorn sqlalchemy pydantic[email]
+cd ..
+cd frontend
+npm install
+
+
+
+npm start
+
+στο δευτερο::::::::::::::::
+
+cd backend
+python -m uvicorn main:app --reload
+
