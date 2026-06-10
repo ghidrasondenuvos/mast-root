@@ -1,0 +1,13 @@
+{
+  "name": "unibite",
+  "version": "1.0.0",
+  "description": "Food Sharing Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "mysql2": "^3.22.4"
+  }
+}
