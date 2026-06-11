@@ -1,80 +1,147 @@
 export function renderDashboard(navigate, state) {
     const container = document.createElement('div');
-    container.className = 'fade-in-up';
-    container.style.cssText = "width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px;";
+    container.style.cssText = "width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; animation: fadeInUp 0.5s ease-out;";
 
     const user = state.loggedInUser;
-    
-    let roleText = "Εθελοντής";
-    let roleIcon = "🌱";
-    if (user.account_type === 'organization') {
-        roleText = "Οργανισμός";
-        roleIcon = "🏛️";
-    } else if (user.account_type === 'sponsor') {
-        roleText = "Χορηγός";
-        roleIcon = "🤝";
-    }
 
-    // Header section
-    let html = `
-        <div class="glass-panel" style="padding: 30px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-            <div>
-                <h1 style="font-family: var(--font-heading); color: var(--accent-color); font-size: 2.2rem; margin: 0 0 10px 0;">
-                    Καλώς ήρθες, ${user.full_name || user.username}!
-                </h1>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 1.2rem;">${roleIcon}</span>
-                    <span style="color: var(--text-secondary); font-family: var(--font-mono); font-size: 1rem;">${roleText}</span>
+    container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+            <h2 style="font-family: var(--font-heading); color: #fff; margin: 0;">Το Dashboard μου</h2>
+            <div style="font-family: var(--font-mono); color: #10b981; font-weight: bold; font-size: 1.2rem;">
+                Διαθέσιμα Credits: ${user.credits}
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px;">
+            <!-- COOK SECTION -->
+            <div style="flex: 1; background: rgba(27,24,27,0.85); border-radius: 15px; padding: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="color: #10b981; font-family: var(--font-heading); margin-top: 0;">👨‍🍳 Ως Μάγειρας</h3>
+                <div id="cook-requests-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+                    <p style="color: #aaa; font-size: 0.9rem;">Φόρτωση...</p>
                 </div>
             </div>
-            <button id="btn-edit-profile" class="releaf-button secondary" style="padding: 10px 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                <span>⚙️</span> Προφίλ
-            </button>
-        </div>
-        
-        <h2 style="font-family: var(--font-heading); font-size: 1.6rem; margin-bottom: 25px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">Γρήγορες Ενέργειες</h2>
-        <div id="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px;">
+
+            <!-- CONSUMER SECTION -->
+            <div style="flex: 1; background: rgba(27,24,27,0.85); border-radius: 15px; padding: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="color: #4f46e5; font-family: var(--font-heading); margin-top: 0;">🍽️ Ως Καταναλωτής</h3>
+                <div id="consumer-requests-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+                    <p style="color: #aaa; font-size: 0.9rem;">Φόρτωση...</p>
+                </div>
+            </div>
         </div>
     `;
 
-    container.innerHTML = html;
-    const grid = container.querySelector('#dashboard-grid');
+    // Fetch Cook Requests
+    fetch(`/api/cook-requests/${user.id}`)
+        .then(res => res.json())
+        .then(requests => {
+            const list = container.querySelector('#cook-requests-list');
+            list.innerHTML = '';
+            if (requests.length === 0) list.innerHTML = '<p style="color: #aaa; font-size: 0.9rem;">Δεν υπάρχουν εισερχόμενα αιτήματα.</p>';
 
-    // Helper για δημιουργία Widget Καρτών
-    function createWidget(title, description, icon, actionText, onClick) {
-        const widget = document.createElement('div');
-        widget.className = 'glass-card';
-        widget.style.cssText = "padding: 30px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;";
-        widget.innerHTML = `
-            <div style="font-size: 3rem; margin-bottom: 20px;">${icon}</div>
-            <h3 style="font-family: var(--font-heading); color: var(--text-primary); margin: 0 0 10px 0; font-size: 1.4rem;">${title}</h3>
-            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; flex-grow: 1; margin: 0 0 25px 0;">${description}</p>
-            <button class="releaf-button" style="width: 100%; padding: 12px; font-size: 0.95rem;">${actionText}</button>
-        `;
-        widget.querySelector('button').addEventListener('click', onClick);
-        return widget;
+            requests.forEach(req => {
+                const card = document.createElement('div');
+                card.style.cssText = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);";
+                card.innerHTML = `
+                    <div style="font-weight: bold; color: #fff;">${req.post_title}</div>
+                    <div style="color: #ccc; font-size: 0.85rem; margin-bottom: 5px;">Από: ${req.consumer_name}</div>
+                    <div style="font-size: 0.8rem; margin-bottom: 10px;">Status: <span style="color: ${getStatusColor(req.status)}">${req.status.toUpperCase()}</span></div>
+                `;
+
+                if (req.status === 'pending') {
+                    card.innerHTML += `
+                        <div style="display: flex; gap: 5px;">
+                            <button class="approve-btn releaf-button" style="padding: 3px 10px; font-size: 0.8rem; background: #10b981;">Αποδοχή</button>
+                            <button class="reject-btn releaf-button" style="padding: 3px 10px; font-size: 0.8rem; background: #ff4d4d;">Απόρριψη</button>
+                        </div>
+                    `;
+                    card.querySelector('.approve-btn').onclick = () => handleDecision(req.id, 'approved');
+                    card.querySelector('.reject-btn').onclick = () => handleDecision(req.id, 'rejected');
+                } else if (req.status === 'approved') {
+                    card.innerHTML += `
+                        <div style="display: flex; gap: 5px;">
+                            <button class="received-btn releaf-button" style="padding: 3px 10px; font-size: 0.8rem; background: #4f46e5;">Παραδόθηκε</button>
+                            <button class="noshow-btn releaf-button" style="padding: 3px 10px; font-size: 0.8rem; background: #ff4d4d;">Δεν Εμφανίστηκε (No-Show)</button>
+                        </div>
+                    `;
+                    card.querySelector('.received-btn').onclick = () => handleCompletion(req.id, 'received');
+                    card.querySelector('.noshow-btn').onclick = () => handleCompletion(req.id, 'no_show');
+                }
+                list.appendChild(card);
+            });
+        });
+
+    // Fetch Consumer Requests
+    fetch(`/api/consumer-requests/${user.id}`)
+        .then(res => res.json())
+        .then(requests => {
+            const list = container.querySelector('#consumer-requests-list');
+            list.innerHTML = '';
+            if (requests.length === 0) list.innerHTML = '<p style="color: #aaa; font-size: 0.9rem;">Δεν έχεις ζητήσει κάποια μερίδα ακόμα.</p>';
+
+            requests.forEach(req => {
+                const card = document.createElement('div');
+                card.style.cssText = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);";
+                card.innerHTML = `
+                    <div style="font-weight: bold; color: #fff;">${req.post_title}</div>
+                    <div style="color: #ccc; font-size: 0.85rem; margin-bottom: 5px;">Μάγειρας: ${req.cook_name}</div>
+                    <div style="font-size: 0.8rem; margin-bottom: 10px;">Status: <span style="color: ${getStatusColor(req.status)}">${req.status.toUpperCase()}</span></div>
+                `;
+
+                if (req.status === 'received') {
+                    card.innerHTML += `
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                            <select class="rating-select releaf-input" style="padding: 3px; font-size: 0.8rem; width: auto;">
+                                <option value="5">5 Αστέρια</option>
+                                <option value="4">4 Αστέρια</option>
+                                <option value="3">3 Αστέρια</option>
+                                <option value="2">2 Αστέρια</option>
+                                <option value="1">1 Αστέρι</option>
+                            </select>
+                            <button class="rate-btn releaf-button" style="padding: 3px 10px; font-size: 0.8rem; margin: 0;">Αξιολόγηση</button>
+                        </div>
+                    `;
+                    card.querySelector('.rate-btn').onclick = () => handleRating(req.id, req.cook_id, card.querySelector('.rating-select').value);
+                }
+                list.appendChild(card);
+            });
+        });
+
+    function getStatusColor(status) {
+        if (status === 'pending') return '#ffcc00';
+        if (status === 'approved') return '#10b981';
+        if (status === 'rejected' || status === 'no_show') return '#ff4d4d';
+        if (status === 'received') return '#4f46e5';
+        return '#fff';
     }
 
-    // Κουμπιά (Widgets) ανάλογα με τον ρόλο
-    if (user.account_type === 'volunteer') {
-        grid.appendChild(createWidget('Αναζήτηση Δράσεων', 'Βρες δενδροφυτεύσεις και δράσεις καθαρισμού στην περιοχή σου και δήλωσε συμμετοχή.', '🔍', 'Εύρεση Δράσεων', () => navigate('search')));
-        grid.appendChild(createWidget('Τα Πιστοποιητικά μου', 'Προβολή και λήψη των PDF πιστοποιητικών σου από παλαιότερες δράσεις.', '🏆', 'Προβολή', () => navigate('certificates')));
-        grid.appendChild(createWidget('Οι Δεξιότητές μου', 'Ενημέρωσε το προφίλ σου με τον εξοπλισμό και τις γνώσεις σου.', '🛠️', 'Ενημέρωση', () => alert('Σε κατασκευή!')));
-    } 
-    else if (user.account_type === 'organization') {
-        grid.appendChild(createWidget('Δημιουργία Δράσης', 'Διοργάνωσε μια νέα περιβαλλοντική δράση και κάλεσε εθελοντές να βοηθήσουν.', '🌱', 'Νέα Δράση', () => navigate('create_action')));
-        grid.appendChild(createWidget('Αιτήσεις Εθελοντών', 'Διαχειρίσου τις αιτήσεις συμμετοχής και οργάνωσε την ομάδα σου.', '👥', 'Διαχείριση', () => navigate('manage_requests')));
-        grid.appendChild(createWidget('Ανάλυση Αναγκών', 'Δες προτάσεις για περιοχές που έχουν άμεση ανάγκη αναδάσωσης (Χάρτης).', '🌍', 'Προβολή Χάρτη', () => alert('Σε κατασκευή!')));
-        grid.appendChild(createWidget('Νέα Καμπάνια', 'Δημιούργησε μια καμπάνια και ζήτα πόρους ή εξοπλισμό από χορηγούς.', '💰', 'Δημιουργία', () => navigate('create_campaign')));
-    }
-    else if (user.account_type === 'sponsor') {
-        grid.appendChild(createWidget('Αναζήτηση Καμπανιών', 'Βρες περιβαλλοντικούς οργανισμούς που χρειάζονται χορηγία ή εξοπλισμό.', '🤝', 'Προβολή', () => navigate('campaigns')));
-        grid.appendChild(createWidget('Ιστορικό Δωρεών', 'Δες τις καμπάνιες που έχεις υποστηρίξει.', '📊', 'Ιστορικό', () => alert('Σε κατασκευή!')));
+    async function handleDecision(id, status) {
+        await fetch(`/api/requests/${id}/decision`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        navigate('dashboard'); // Refresh
     }
 
-    container.querySelector('#btn-edit-profile').addEventListener('click', () => {
-        alert('Επεξεργασία προφίλ σε κατασκευή!');
-    });
+    async function handleCompletion(id, status) {
+        await fetch(`/api/requests/${id}/completion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        navigate('dashboard'); // Refresh
+    }
+
+    async function handleRating(req_id, cook_id, rating) {
+        await fetch('/api/reviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: req_id, consumer_id: user.id, cook_id, rating: parseInt(rating) })
+        });
+        alert('Η αξιολόγηση αποθηκεύτηκε!');
+        navigate('dashboard'); // Refresh
+    }
 
     return container;
 }

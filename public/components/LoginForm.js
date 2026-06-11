@@ -1,117 +1,60 @@
-// Αρχείο: public/components/LoginForm.js
-
-export function renderLoginForm(onBack, onLoginSuccess) {
-    // 1. Δημιουργία του κεντρικού Container με τα νέα styles
+export function renderLoginForm(onBack, onSuccess) {
     const container = document.createElement('div');
-    container.className = 'glass-panel fade-in-up';
-    container.style.cssText = "padding: 50px 40px; width: 100%; max-width: 400px; text-align: center; margin: auto; box-sizing: border-box;";
+    container.className = 'glass-panel';
+    container.style.cssText = "width: 100%; max-width: 400px; margin: 0 auto; padding: 40px 30px; text-align: center; animation: fadeInUp 0.5s ease-out;";
 
-    // 2. Εσωτερικό State
-    let formState = { email: '', password: '' };
-    let step = 1; 
-    let result = { status: '', message: '' };
+    container.innerHTML = `
+        <h2 style="font-family: var(--font-heading); color: #fff; margin-bottom: 5px; font-size: 2rem;">Σύνδεση</h2>
+        <p style="font-family: var(--font-mono); color: #ccc; font-size: 0.9rem; margin-bottom: 25px;">Καλώς ήρθες ξανά στο UniBite!</p>
 
-    // 3. Η συνάρτηση Render
-    function render() {
-        if (step === 1) {
-            container.innerHTML = `
-                <div class="fade-in-up">
-                    <h2 style="font-family: var(--font-heading); color: var(--accent-color); font-size: 2.2rem; margin: 0 0 10px 0; letter-spacing: 1px;">Σύνδεση</h2>
-                    <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 0.95rem;">Καλώς ήρθατε πίσω στο Releaf</p>
-                    <form id="login-form" style="display: flex; flex-direction: column; gap: 15px;">
-                        <input class="releaf-input" type="email" id="login-email" name="email" autocomplete="username" placeholder="Διεύθυνση Email" required />
-                        <input class="releaf-input" type="password" id="login-password" name="password" autocomplete="current-password" placeholder="Κωδικός Πρόσβασης" required />
-                        <button class="releaf-button" type="submit" style="margin-top: 15px; width: 100%;">Είσοδος</button>
-                    </form>
-                    <div style="margin-top: 25px;">
-                        <button id="btn-cancel" class="releaf-button secondary" type="button" style="width: 100%;">Ακύρωση</button>
-                    </div>
-                </div>
-            `;
+        <form id="login-form" style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="email" id="login-email" class="releaf-input" placeholder="Email" required />
+            <input type="password" id="login-password" class="releaf-input" placeholder="Κωδικός" required />
 
-            const emailInput = container.querySelector('#login-email');
-            const passwordInput = container.querySelector('#login-password');
-            emailInput.value = formState.email;
-            passwordInput.value = formState.password;
+            <button type="submit" class="releaf-button" style="margin-top: 10px;">Σύνδεση</button>
+            <button type="button" id="login-back-btn" class="releaf-button" style="background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.2);">Επιστροφή</button>
+        </form>
 
-            emailInput.addEventListener('input', (e) => formState.email = e.target.value);
-            passwordInput.addEventListener('input', (e) => formState.password = e.target.value);
+        <div id="login-message" style="margin-top: 15px; font-family: var(--font-mono); font-size: 0.9rem; color: #ff4d4d;"></div>
+    `;
 
-            container.querySelector('#btn-cancel').addEventListener('click', onBack);
+    container.querySelector('#login-back-btn').onclick = onBack;
 
-            container.querySelector('#login-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                if (document.activeElement) {
-                    document.activeElement.blur();
-                }
+    container.querySelector('#login-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const email = container.querySelector('#login-email').value;
+        const password = container.querySelector('#login-password').value;
+        const msgDiv = container.querySelector('#login-message');
 
-                if (!formState.email || !formState.password) {
-                    result = { status: 'error', message: 'Παρακαλώ συμπληρώστε όλα τα πεδία.' };
-                    step = 2;
-                    render();
-                    return;
-                }
+        msgDiv.textContent = 'Σύνδεση...';
+        msgDiv.style.color = '#ccc';
 
-                try {
-                    const res = await fetch('/login', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(formState)
-                    });
-                    const data = await res.json();
-                    
-                    if (res.ok) {
-                        result = { status: 'success', message: 'Επιτυχής σύνδεση! Ανακατεύθυνση...' };
-                        step = 2;
-                        render();
-                        
-                        setTimeout(() => {
-                            onLoginSuccess(data.user);
-                        }, 1500);
-                    } else {
-                        const errorMsg = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
-                        result = { status: 'error', message: errorMsg };
-                        step = 2;
-                        render();
-                    }
-                } catch (err) {
-                    result = { status: 'error', message: "Δεν υπάρχει σύνδεση με τον διακομιστή." };
-                    step = 2;
-                    render();
-                }
+        try {
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
             });
 
-        } else if (step === 2) {
-            const isSuccess = result.status === 'success';
-            container.innerHTML = `
-                <div class="fade-in-up" style="padding: 30px 0;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">
-                        ${isSuccess ? '🌱' : '⚠️'}
+            const data = await res.json();
+            if (res.ok) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px 0; animation: fadeInUp 0.5s ease-out;">
+                        <div style="font-size: 4rem; margin-bottom: 15px;">🍲</div>
+                        <h2 style="font-family: var(--font-heading); color: var(--accent-color); margin-bottom: 10px;">Επιτυχής Σύνδεση!</h2>
+                        <p style="font-family: var(--font-mono); color: #ddd; margin-bottom: 25px;">Καλώς ήρθες, ${data.user.username}</p>
                     </div>
-                    <h2 style="font-family: var(--font-heading); color: ${isSuccess ? 'var(--accent-color)' : '#ef4444'}; font-size: 2rem; margin: 0 0 15px 0;">
-                        ${isSuccess ? 'Επιτυχία!' : 'Σφάλμα!'}
-                    </h2>
-                    <p style="font-family: var(--font-main); color: var(--text-primary); font-size: 1.1rem; line-height: 1.6;">
-                        ${result.message}
-                    </p>
-                    ${!isSuccess ? `
-                        <button id="btn-retry" class="releaf-button secondary" style="margin-top: 30px; width: 100%;">
-                            Δοκιμή Ξανά
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-
-            if (!isSuccess) {
-                container.querySelector('#btn-retry').addEventListener('click', () => {
-                    step = 1;
-                    render();
-                });
+                `;
+                setTimeout(() => onSuccess(data.user), 1500);
+            } else {
+                msgDiv.style.color = '#ff4d4d';
+                msgDiv.textContent = data.detail;
             }
+        } catch (error) {
+            msgDiv.style.color = '#ff4d4d';
+            msgDiv.textContent = 'Σφάλμα επικοινωνίας με τον server.';
         }
-    }
+    };
 
-    render();
     return container;
 }

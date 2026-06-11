@@ -1,179 +1,60 @@
-// Αρχείο: public/components/RegistrationForm.js
-
-export function renderRegistrationForm(onBack, onComplete) {
+export function renderRegistrationForm(onBack) {
     const container = document.createElement('div');
-    container.style.cssText = "background: rgba(27, 24, 27, 0.8); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); width: 380px; text-align: center;";
+    container.className = 'glass-panel';
+    container.style.cssText = "width: 100%; max-width: 450px; margin: 0 auto; padding: 40px 30px; text-align: center; animation: fadeInUp 0.5s ease-out;";
 
-    // 1. Εσωτερικό State (Αντικαθιστά τα useState της React)
-    const initialFormState = { username: '', email: '', password: '', full_name: '', account_type: 'volunteer', skills: '', resources: '' };
-    let formState = { ...initialFormState };
-    let step = 1;
-    let errorMessage = '';
+    container.innerHTML = `
+        <h2 style="font-family: var(--font-heading); color: #fff; margin-bottom: 5px; font-size: 2rem;">Εγγραφή στο UniBite</h2>
+        <p style="font-family: var(--font-mono); color: #ccc; font-size: 0.9rem; margin-bottom: 25px;">Μοιράσου το φαγητό σου, κέρδισε credits!</p>
 
-    // 2. Η συνάρτηση Render (Ανανεώνει το DOM δυναμικά)
-    function render() {
-        let html = '';
+        <form id="reg-form" style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="text" id="reg-username" class="releaf-input" placeholder="Όνομα Χρήστη" required />
+            <input type="email" id="reg-email" class="releaf-input" placeholder="Email" required />
+            <input type="password" id="reg-password" class="releaf-input" placeholder="Κωδικός" required />
 
-        // Τίτλος Φόρμας
-        if (step !== 3) {
-            html += `<h2 style="font-family: var(--font-mono); color: var(--accent-color);">${step === 1 ? 'προσωπικά στοιχεία' : 'συμπληρωματικά στοιχεία'}</h2>`;
-        }
+            <button type="submit" class="releaf-button" style="margin-top: 10px;">Εγγραφή</button>
+            <button type="button" id="reg-back-btn" class="releaf-button" style="background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.2);">Επιστροφή</button>
+        </form>
 
-        // --- STEP 1: Προσωπικά Στοιχεία ---
-        if (step === 1) {
-            html += `
-                <form id="form-step-1">
-                    <input class="releaf-input" type="text" id="reg_fullname" autocomplete="off" placeholder="ονοματεπώνυμο" value="${formState.full_name}" />
-                    <input class="releaf-input" type="text" id="reg_user_id" autocomplete="off" placeholder="username" value="${formState.username}" />
-                    <input class="releaf-input" type="email" id="reg_email" autocomplete="username" placeholder="email (π.χ. test@test.com)" value="${formState.email}" />
-                    <input class="releaf-input" type="password" id="reg_password" autocomplete="new-password" placeholder="password" value="${formState.password}" />
-                    <div style="color: #ff4d4d; font-family: var(--font-mono); font-size: 0.85rem; margin-top: 10px; min-height: 20px;">${errorMessage}</div>
-                    <button class="releaf-button" type="submit" style="margin-top: 15px;">επόμενο</button>
-                </form>
-            `;
-        } 
-        // --- STEP 2: Συμπληρωματικά Στοιχεία ---
-        else if (step === 2) {
-            html += `
-                <form id="form-step-2">
-                    <div style="font-family: var(--font-mono); font-size: 0.8rem; color: #ccc; margin-bottom: 20px; line-height: 1.6;">
-                        επίλεξε τον ρόλο που σου ταιριάζει.<br/>
-                        αν είσαι εθελοντής, δήλωσε τις γνώσεις σου.<br/>
-                        αλλιώς, μπορείς να βοηθήσεις το έργο μας<br/>
-                        ως οργανισμός ή ως χορηγός.
+        <div id="reg-message" style="margin-top: 15px; font-family: var(--font-mono); font-size: 0.9rem;"></div>
+    `;
+
+    container.querySelector('#reg-back-btn').onclick = onBack;
+
+    container.querySelector('#reg-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const username = container.querySelector('#reg-username').value;
+        const email = container.querySelector('#reg-email').value;
+        const password = container.querySelector('#reg-password').value;
+        const msgDiv = container.querySelector('#reg-message');
+
+        try {
+            const res = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px 0; animation: fadeInUp 0.5s ease-out;">
+                        <div style="font-size: 4rem; margin-bottom: 15px;">🎉</div>
+                        <h2 style="font-family: var(--font-heading); color: var(--accent-color); margin-bottom: 10px;">Καλώς ήρθες!</h2>
+                        <p style="font-family: var(--font-mono); color: #ddd; margin-bottom: 25px;">${data.message}</p>
+                        <button id="success-back-btn" class="releaf-button">Επιστροφή στην Αρχική</button>
                     </div>
-                    <select id="reg_account_type" class="releaf-input" style="-webkit-appearance: none; -moz-appearance: none; appearance: none; text-align: center; cursor: pointer;">
-                        <option value="volunteer" ${formState.account_type === 'volunteer' ? 'selected' : ''}>εθελοντής</option>
-                        <option value="organization" ${formState.account_type === 'organization' ? 'selected' : ''}>οργανισμός</option>
-                        <option value="sponsor" ${formState.account_type === 'sponsor' ? 'selected' : ''}>χορηγός</option>
-                    </select>
-                    <input class="releaf-input" id="reg_skills" placeholder="δεξιότητες (π.χ. κηπουρική, pr)" value="${formState.skills}" />
-                    <input class="releaf-input" id="reg_resources" placeholder="διαθέσιμα μέσα (π.χ. οχήματα, budget)" value="${formState.resources}" />
-                    <div style="color: #ff4d4d; font-family: var(--font-mono); font-size: 0.85rem; margin-top: 10px; min-height: 20px;">${errorMessage}</div>
-                    <button class="releaf-button" type="submit" style="margin-top: 15px;">υποβολή εγγραφής</button>
-                </form>
-            `;
-        } 
-        // --- STEP 3: Επιτυχία ---
-        else if (step === 3) {
-            html += `
-                <div style="padding: 20px 0;">
-                    <h2 style="font-family: var(--font-heading); color: #8db600; font-size: 2rem; margin: 0 0 10px 0;">επιτυχία!</h2>
-                    <p style="font-family: var(--font-mono); color: #fff; line-height: 1.6;">ο λογαριασμός σας δημιουργήθηκε.<br/>καλώς ήρθατε στο releaf.</p>
-                    <button id="btn-finish" class="releaf-button" style="margin-top: 30px;">επιστροφή στο μενού</button>
-                </div>
-            `;
+                `;
+                container.querySelector('#success-back-btn').onclick = onBack;
+            } else {
+                msgDiv.style.color = '#ff4d4d';
+                msgDiv.textContent = data.detail;
+            }
+        } catch (error) {
+            msgDiv.style.color = '#ff4d4d';
+            msgDiv.textContent = 'Σφάλμα σύνδεσης με τον server.';
         }
+    };
 
-        // Κουμπί Ακύρωσης στα βήματα 1 και 2
-        if (step !== 3) {
-            html += `
-                <br />
-                <button id="btn-cancel" class="releaf-button" type="button" style="background: transparent; border: 1px solid white; margin-top: 10px;">ακύρωση</button>
-            `;
-        }
-
-        container.innerHTML = html;
-
-        // 3. Εφαρμογή Event Listeners ΜΕΤΑ το render του HTML
-        if (step === 1) {
-            const fnameInput = container.querySelector('#reg_fullname');
-            const userInput = container.querySelector('#reg_user_id');
-            const emailInput = container.querySelector('#reg_email');
-            const passInput = container.querySelector('#reg_password');
-
-            fnameInput.addEventListener('input', e => formState.full_name = e.target.value);
-            userInput.addEventListener('input', e => formState.username = e.target.value);
-            emailInput.addEventListener('input', e => formState.email = e.target.value);
-            passInput.addEventListener('input', e => formState.password = e.target.value);
-
-            container.querySelector('#form-step-1').addEventListener('submit', (e) => {
-                e.preventDefault();
-                errorMessage = '';
-
-                if (!formState.full_name || !formState.username || !formState.email || !formState.password) {
-                    errorMessage = 'παρακαλώ συμπληρώστε όλα τα προσωπικά στοιχεία.';
-                    render(); return;
-                }
-                if (formState.full_name.length < 2) { errorMessage = 'το ονοματεπώνυμο πρέπει να έχει τουλάχιστον 2 χαρακτήρες.'; render(); return; }
-                if (formState.username.length < 2) { errorMessage = 'το username πρέπει να έχει τουλάχιστον 2 χαρακτήρες.'; render(); return; }
-                if (formState.password.length < 4) { errorMessage = 'το password πρέπει να έχει τουλάχιστον 4 χαρακτήρες.'; render(); return; }
-                
-                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                if (!emailRegex.test(formState.email)) {
-                    errorMessage = 'το email πρέπει να έχει ΜΟΝΟ αγγλικούς χαρακτήρες, ένα "@" και ένα "."';
-                    render(); return;
-                }
-
-                step = 2; // Μετάβαση στο Βήμα 2
-                render();
-            });
-        } 
-        else if (step === 2) {
-            const typeInput = container.querySelector('#reg_account_type');
-            const skillsInput = container.querySelector('#reg_skills');
-            const resInput = container.querySelector('#reg_resources');
-
-            typeInput.addEventListener('change', e => formState.account_type = e.target.value);
-            skillsInput.addEventListener('input', e => formState.skills = e.target.value);
-            resInput.addEventListener('input', e => formState.resources = e.target.value);
-
-            container.querySelector('#form-step-2').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                errorMessage = '';
-
-                if (!formState.skills || !formState.resources) {
-                    errorMessage = 'παρακαλώ συμπληρώστε τις δεξιότητες και τα μέσα.';
-                    render(); return;
-                }
-
-                try {
-                    const res = await fetch('/register', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(formState)
-                    });
-                    const data = await res.json();
-                    
-                    if(res.ok) {
-                        step = 3;
-                        onComplete(); // Ενημερώνουμε τον γονέα αν χρειάζεται
-                        render();
-                    } else {
-                        const errorMsg = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
-                        if (["username", "email", "password", "full_name"].includes(errorMsg) || errorMsg.includes("Email") || errorMsg.includes("Username")) {
-                            step = 1; // Επιστροφή στο Βήμα 1 αν το λάθος είναι εκεί
-                        }
-                        errorMessage = `σφάλμα: ${errorMsg}`;
-                        render();
-                    }
-                } catch (err) {
-                    errorMessage = "σφάλμα: δεν υπάρχει σύνδεση με το backend.";
-                    render();
-                }
-            });
-        } 
-        else if (step === 3) {
-            container.querySelector('#btn-finish').addEventListener('click', () => {
-                formState = { ...initialFormState };
-                step = 1;
-                onBack(); // Επιστροφή στην αρχική
-            });
-        }
-
-        // Κουμπί Ακύρωσης
-        if (step !== 3) {
-            container.querySelector('#btn-cancel').addEventListener('click', () => {
-                formState = { ...initialFormState };
-                errorMessage = '';
-                step = 1;
-                onBack();
-            });
-        }
-    }
-
-    // 4. Αρχική Κλήση Render
-    render();
-    
     return container;
 }
