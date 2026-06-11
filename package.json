@@ -1,7 +1,7 @@
 {
-  "name": "unibite",
+  "name": "releaf",
   "version": "1.0.0",
-  "description": "Food Sharing Platform",
+  "description": "Environmental and Volunteering Platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

@@ -1,61 +1,225 @@
+// Αρχείο: public/components/CertificatesDashboard.js
+
 export function renderCertificatesDashboard(currentUser, onBack) {
     const container = document.createElement('div');
     container.style.cssText = "width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 15px;";
 
-    // Mock Data όπως στο React project
-    let approvedActions = [
-        { action_id: 1, action_title: "Δενδροφύτευση στο Ποικίλο Όρος", organisation: "Save Your Hood", has_certificate: false },
-        { action_id: 2, action_title: "Καθαρισμός Παραλίας", organisation: "We4All", has_certificate: true }
-    ];
+    // 1. Εσωτερικό State
+    let pendingActions = []; // Δράσεις που παρακολούθησε αλλά δεν έβγαλε πιστοποιητικό
+    let certificates = [];   // Εκδοθέντα πιστοποιητικά
+    let isLoading = true;
+    let resultMsg = { status: '', text: '' };
 
-    let certificates = [
-        { id: 101, action_title: "Καθαρισμός Παραλίας", organisation: "We4All", issue_date: new Date().toLocaleDateString('el-GR'), volunteer_name: currentUser.username }
-    ];
+    // 2. Mock API Data Fetching (Προσομοίωση του τι έφερνε το backend σου)
+    // Στο κανονικό Releaf εδώ θα έκανες fetch('/api/certificates/...')
+    function fetchData() {
+        isLoading = true;
+        render();
 
-    function renderContent() {
-        container.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(27, 24, 27, 0.9); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                <h3 style="font-family: var(--font-heading); color: #10b981; margin: 0; font-size: 1.8rem;">🏆 Πιστοποιητικά Εθελοντισμού</h3>
-                <button class="releaf-button" id="btn-back" style="padding: 5px 15px; font-size: 0.85rem; background: transparent; border: 1px solid white;">Πίσω</button>
-            </div>
+        setTimeout(() => {
+            // Προσομοίωση δεδομένων που έρχονται από τη βάση
+            pendingActions = [
+                { action_id: 1, action_title: "Δενδροφύτευση στο Ποικίλο Όρος", organisation: "Save Your Hood", has_certificate: false },
+                { action_id: 2, action_title: "Καθαρισμός Παραλίας Ρίου", organisation: "We4All", has_certificate: false }
+            ];
+            certificates = [
+                { id: 101, action_title: "Ανακύκλωση Πλαστικού", organisation: "Releaf Org", issue_date: "12/05/2026", volunteer_name: currentUser.username }
+            ];
             
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: stretch;">
-                
-                <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                    <h4 style="color: var(--accent-color); font-family: var(--font-mono); margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Δράσεις προς Πιστοποίηση</h4>
-                    <div id="actions-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
-                </div>
+            isLoading = false;
+            render();
+        }, 800);
+    }
 
-                <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                    <h4 style="color: #10b981; font-family: var(--font-mono); margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Διαθέσιμα Πιστοποιητικά</h4>
-                    <div id="certs-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
-                </div>
+    // 3. Λειτουργία Έκδοσης Πιστοποιητικού
+    async function issueCertificate(actionId) {
+        resultMsg = { status: '', text: '' };
+        render();
 
+        try {
+            // Προσομοίωση API Call για έκδοση
+            /* const res = await fetch('/api/certificates/issue', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentUser.id, action_id: actionId })
+            }); */
+            
+            setTimeout(() => {
+                const actionIndex = pendingActions.findIndex(a => a.action_id === actionId);
+                if (actionIndex > -1) {
+                    const action = pendingActions[actionIndex];
+                    // Αφαίρεση από τα εκκρεμή και προσθήκη στα πιστοποιητικά
+                    pendingActions.splice(actionIndex, 1);
+                    certificates.push({
+                        id: Math.floor(Math.random() * 10000),
+                        action_title: action.action_title,
+                        organisation: action.organisation,
+                        issue_date: new Date().toLocaleDateString('el-GR'),
+                        volunteer_name: currentUser.username
+                    });
+                    resultMsg = { status: 'success', text: 'Το πιστοποιητικό εκδόθηκε επιτυχώς!' };
+                }
+                render();
+            }, 500);
+
+        } catch (e) {
+            resultMsg = { status: 'error', text: 'Αδυναμία έκδοσης πιστοποιητικού.' };
+            render();
+        }
+    }
+
+    // 3.5 Γεννήτρια PDF
+    function generatePDF(cert) {
+        const printWindow = window.open('', '_blank', 'width=1000,height=800');
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Πιστοποιητικό - ${cert.action_title}</title>
+              <style>
+                @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:ital,wght@1,600&display=swap');
+                body { 
+                  font-family: 'Montserrat', sans-serif; 
+                  background: #52525b; 
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center; 
+                  height: 100vh; 
+                  margin: 0;
+                  -webkit-print-color-adjust: exact;
+                }
+                .certificate {
+                  background: white;
+                  width: 900px;
+                  height: 650px;
+                  padding: 50px;
+                  text-align: center;
+                  border: 15px solid #10b981;
+                  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+                  position: relative;
+                  box-sizing: border-box;
+                }
+                .certificate::before {
+                  content: '';
+                  position: absolute;
+                  top: 10px; left: 10px; right: 10px; bottom: 10px;
+                  border: 2px dashed #10b981;
+                }
+                .logo { font-size: 2.5rem; font-weight: bold; color: #1b181b; letter-spacing: 5px; margin-bottom: 20px; }
+                .title { font-family: 'Playfair Display', serif; font-size: 3.5rem; color: #10b981; margin: 0 0 20px 0; }
+                .subtitle { font-size: 1.2rem; color: #666; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; }
+                .name { font-family: 'Playfair Display', serif; font-size: 3rem; color: #1b181b; margin: 20px 0; border-bottom: 2px solid #ccc; display: inline-block; padding: 0 50px; }
+                .action { font-size: 1.5rem; color: #4f46e5; font-weight: bold; margin: 30px 0; }
+                .org { font-size: 1.1rem; color: #555; }
+                .footer { position: absolute; bottom: 50px; left: 50px; right: 50px; display: flex; justify-content: space-between; font-size: 0.9rem; color: #888; font-weight: bold; }
+              </style>
+            </head>
+            <body>
+              <div class="certificate">
+                <div class="logo">RELEAF</div>
+                <h1 class="title">Πιστοποιητικό Εθελοντισμού</h1>
+                <div class="subtitle">Απονέμεται Τιμητικά Στον/Στην</div>
+                <div class="name">${cert.volunteer_name}</div>
+                <div class="org">Για την ανεκτίμητη προσφορά και ενεργή συμμετοχή στην περιβαλλοντική δράση:</div>
+                <div class="action">"${cert.action_title}"</div>
+                <div class="org">Διοργάνωση: <strong>${cert.organisation}</strong></div>
+                <div class="footer">
+                  <div>Ημερομηνία: ${cert.issue_date}</div>
+                  <div>Αρ. Πιστοποιητικού: #00${cert.id}</div>
+                </div>
+              </div>
+              <script>
+                setTimeout(() => { window.print(); window.close(); }, 500);
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+    }
+
+    // 4. Η συνάρτηση Render
+    function render() {
+        let html = `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(27, 24, 27, 0.9); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="font-family: var(--font-heading); color: #10b981; margin: 0; font-size: 1.8rem;">🏆 Τα Πιστοποιητικά μου</h3>
+                <button id="btn-back" class="releaf-button" style="padding: 5px 15px; font-size: 0.85rem; background: transparent; border: 1px solid white; margin: 0;">Πίσω</button>
             </div>
         `;
 
-        container.querySelector('#btn-back').addEventListener('click', onBack);
-
-        // Render Λίστας Δράσεων
-        const actionsList = container.querySelector('#actions-list');
-        if (approvedActions.length === 0) actionsList.innerHTML = '<p style="color: #aaa; font-size: 0.9rem;">Δεν έχετε ολοκληρώσει δράσεις.</p>';
-        
-        approvedActions.forEach(action => {
-            const div = document.createElement('div');
-            div.style.cssText = "background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-color);";
-            div.innerHTML = `
-                <strong style="color: white; display: block; margin-bottom: 5px;">${action.action_title}</strong>
-                <span style="font-size: 0.8rem; color: #ccc;">Οργάνωση: ${action.organisation}</span>
-                <div style="margin-top: 10px;">
-                    ${action.has_certificate 
-                        ? `<span style="font-size: 0.75rem; color: #10b981; border: 1px solid #10b981; padding: 3px 8px; border-radius: 4px;">Εκδόθηκε ✓</span>` 
-                        : `<button class="releaf-button btn-issue" data-id="${action.action_id}" style="padding: 5px 10px; font-size: 0.75rem; background: var(--accent-color);">Έκδοση PDF</button>`}
+        if (resultMsg.text) {
+            const bgColor = resultMsg.status === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(255,77,77,0.2)';
+            const txtColor = resultMsg.status === 'success' ? '#10b981' : '#ff4d4d';
+            html += `
+                <div style="padding: 10px; background: ${bgColor}; color: ${txtColor}; border-radius: 8px; font-family: var(--font-mono); text-align: center; font-weight: bold; margin-top: 10px;">
+                    ${resultMsg.text}
                 </div>
             `;
-            actionsList.appendChild(div);
-        });
+        }
 
-        // Event Listeners για Έκδοση
+        if (isLoading) {
+            html += `<p style="color: #ccc; text-align: center; margin-top: 50px; font-family: var(--font-mono);">Φόρτωση δεδομένων πιστοποίησης...</p>`;
+        } else {
+            html += `
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: stretch; margin-top: 10px;">
+                    
+                    <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                        <h4 style="color: var(--accent-color); font-family: var(--font-mono); margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Δράσεις προς Πιστοποίηση</h4>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+            `;
+            
+            if (pendingActions.length === 0) {
+                html += `<p style="color: #aaa; font-size: 0.9rem; font-family: var(--font-mono);">Δεν υπάρχουν δράσεις προς πιστοποίηση.</p>`;
+            } else {
+                pendingActions.forEach(action => {
+                    html += `
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-color);">
+                            <strong style="color: white; display: block; margin-bottom: 5px; font-family: var(--font-mono); font-size: 0.95rem;">${action.action_title}</strong>
+                            <span style="font-size: 0.8rem; color: #ccc; font-family: var(--font-mono);">Οργάνωση: ${action.organisation}</span>
+                            <div style="margin-top: 10px;">
+                                <button class="btn-issue releaf-button" data-id="${action.action_id}" style="padding: 5px 10px; font-size: 0.75rem; background: var(--accent-color); margin: 0;">Έκδοση Πιστοποιητικού</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `
+                        </div>
+                    </div>
+
+                    <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                        <h4 style="color: #10b981; font-family: var(--font-mono); margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Διαθέσιμα Πιστοποιητικά</h4>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+            `;
+
+            if (certificates.length === 0) {
+                html += `<p style="color: #aaa; font-size: 0.9rem; font-family: var(--font-mono);">Δεν έχουν εκδοθεί πιστοποιητικά ακόμα.</p>`;
+            } else {
+                certificates.forEach(cert => {
+                    html += `
+                        <div style="background: rgba(16,185,129,0.1); padding: 15px; border-radius: 8px; border: 1px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: #10b981; display: block; margin-bottom: 5px; font-family: var(--font-mono); font-size: 0.95rem;">${cert.action_title}</strong>
+                                <span style="font-size: 0.75rem; color: #ccc; display: block; font-family: var(--font-mono);">Ημ/νία: ${cert.issue_date}</span>
+                                <span style="font-size: 0.7rem; color: #a67c52; display: block; font-family: var(--font-mono); margin-top: 3px;">ID: #${cert.id}</span>
+                            </div>
+                            <button class="btn-print releaf-button" data-id="${cert.id}" style="padding: 5px 10px; font-size: 0.75rem; background: transparent; border: 1px solid #10b981; color: #10b981; margin: 0;">📄 Λήψη PDF</button>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+
+        // 5. Επανατοποθέτηση Event Listeners
+        const btnBack = container.querySelector('#btn-back');
+        if (btnBack) btnBack.addEventListener('click', onBack);
+
         container.querySelectorAll('.btn-issue').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = parseInt(e.target.getAttribute('data-id'));
@@ -63,49 +227,19 @@ export function renderCertificatesDashboard(currentUser, onBack) {
             });
         });
 
-        // Render Λίστας Πιστοποιητικών
-        const certsList = container.querySelector('#certs-list');
-        if (certificates.length === 0) certsList.innerHTML = '<p style="color: #aaa; font-size: 0.9rem;">Δεν έχουν εκδοθεί πιστοποιητικά.</p>';
-        
-        certificates.forEach(cert => {
-            const div = document.createElement('div');
-            div.style.cssText = "background: rgba(16,185,129,0.1); padding: 15px; border-radius: 8px; border: 1px solid #10b981; display: flex; justify-content: space-between; align-items: center;";
-            div.innerHTML = `
-                <div>
-                    <strong style="color: #10b981; display: block; margin-bottom: 5px;">${cert.action_title}</strong>
-                    <span style="font-size: 0.75rem; color: #ccc; display: block;">Ημ/νία: ${cert.issue_date}</span>
-                </div>
-                <button class="releaf-button btn-print" style="padding: 5px 10px; font-size: 0.75rem; background: transparent; border: 1px solid #10b981; color: #10b981;">🖨️ Εκτύπωση</button>
-            `;
-            certsList.appendChild(div);
-        });
-
-        // Event Listener για Εκτύπωση (Native Browser Print)
         container.querySelectorAll('.btn-print').forEach(btn => {
-            btn.addEventListener('click', () => {
-                alert('Άνοιγμα Native Print Dialog...'); // Εδώ θα έμπαινε η λογική print() που είχες
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(e.currentTarget.getAttribute('data-id'));
+                const cert = certificates.find(c => c.id === id);
+                if (cert) {
+                    generatePDF(cert);
+                }
             });
         });
     }
 
-    function issueCertificate(actionId) {
-        const action = approvedActions.find(a => a.action_id === actionId);
-        if (!action) return;
+    // Εκκίνηση Φόρτωσης
+    fetchData();
 
-        // Ενημερώνουμε τα Arrays
-        approvedActions = approvedActions.map(a => a.action_id === actionId ? { ...a, has_certificate: true } : a);
-        certificates.push({
-            id: Math.floor(Math.random() * 1000),
-            action_title: action.action_title,
-            organisation: action.organisation,
-            issue_date: new Date().toLocaleDateString('el-GR'),
-            volunteer_name: currentUser.username
-        });
-
-        // Ξανασχεδιάζουμε το UI
-        renderContent();
-    }
-
-    renderContent();
     return container;
 }
