@@ -1,55 +1,55 @@
 // Αρχείο: public/components/LoginForm.js
 
 export function renderLoginForm(onBack, onLoginSuccess) {
-    // 1. Δημιουργία του κεντρικού Container με τα αρχικά styles
+    // 1. Δημιουργία του κεντρικού Container με τα νέα styles
     const container = document.createElement('div');
-    container.style.cssText = "background: rgba(27, 24, 27, 0.8); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); width: 380px; text-align: center;";
+    container.className = 'glass-panel fade-in-up';
+    container.style.cssText = "padding: 50px 40px; width: 100%; max-width: 400px; text-align: center; margin: auto; box-sizing: border-box;";
 
-    // 2. Εσωτερικό State (Αντικαθιστά το useState της React)
+    // 2. Εσωτερικό State
     let formState = { email: '', password: '' };
     let step = 1; 
     let result = { status: '', message: '' };
 
-    // 3. Η συνάρτηση Render (Ανανεώνει το HTML με βάση το State)
+    // 3. Η συνάρτηση Render
     function render() {
         if (step === 1) {
             container.innerHTML = `
-                <h2 style="font-family: var(--font-mono); color: var(--accent-color); margin-bottom: 20px;">σύνδεση</h2>
-                <form id="login-form">
-                    <input class="releaf-input" type="email" id="login-email" name="email" autocomplete="username" placeholder="email" required />
-                    <input class="releaf-input" type="password" id="login-password" name="password" autocomplete="current-password" placeholder="password" required />
-                    <button class="releaf-button" type="submit" style="margin-top: 20px;">είσοδος</button>
-                </form>
-                <br />
-                <button id="btn-cancel" class="releaf-button" type="button" style="background: transparent; border: 1px solid white; margin-top: 10px;">ακύρωση</button>
+                <div class="fade-in-up">
+                    <h2 style="font-family: var(--font-heading); color: var(--accent-color); font-size: 2.2rem; margin: 0 0 10px 0; letter-spacing: 1px;">Σύνδεση</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 0.95rem;">Καλώς ήρθατε πίσω στο Releaf</p>
+                    <form id="login-form" style="display: flex; flex-direction: column; gap: 15px;">
+                        <input class="releaf-input" type="email" id="login-email" name="email" autocomplete="username" placeholder="Διεύθυνση Email" required />
+                        <input class="releaf-input" type="password" id="login-password" name="password" autocomplete="current-password" placeholder="Κωδικός Πρόσβασης" required />
+                        <button class="releaf-button" type="submit" style="margin-top: 15px; width: 100%;">Είσοδος</button>
+                    </form>
+                    <div style="margin-top: 25px;">
+                        <button id="btn-cancel" class="releaf-button secondary" type="button" style="width: 100%;">Ακύρωση</button>
+                    </div>
+                </div>
             `;
 
-            // Επαναφορά τιμών (Αν ο χρήστης γυρίσει από το Step 2, να μην έχουν σβηστεί)
             const emailInput = container.querySelector('#login-email');
             const passwordInput = container.querySelector('#login-password');
             emailInput.value = formState.email;
             passwordInput.value = formState.password;
 
-            // Ενημέρωση του State όταν πληκτρολογεί (Αντίστοιχο του onChange)
             emailInput.addEventListener('input', (e) => formState.email = e.target.value);
             passwordInput.addEventListener('input', (e) => formState.password = e.target.value);
 
-            // Κουμπί Ακύρωσης
             container.querySelector('#btn-cancel').addEventListener('click', onBack);
 
-            // Υποβολή (Submit)
             container.querySelector('#login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
-                // ΤΟ ΜΑΓΙΚΟ ΚΟΛΠΟ: Ξε-εστιάζει τα πεδία, οπότε ο Firefox νομίζει ότι η φόρμα υποβλήθηκε κανονικά!
                 if (document.activeElement) {
                     document.activeElement.blur();
                 }
 
                 if (!formState.email || !formState.password) {
-                    result = { status: 'error', message: 'παρακαλώ συμπληρώστε όλα τα πεδία.' };
+                    result = { status: 'error', message: 'Παρακαλώ συμπληρώστε όλα τα πεδία.' };
                     step = 2;
-                    render(); // Επανασχεδιασμός σε Step 2
+                    render();
                     return;
                 }
 
@@ -62,12 +62,11 @@ export function renderLoginForm(onBack, onLoginSuccess) {
                     const data = await res.json();
                     
                     if (res.ok) {
-                        result = { status: 'success', message: 'επιτυχής σύνδεση! δημιουργία συνεδρίας...' };
+                        result = { status: 'success', message: 'Επιτυχής σύνδεση! Ανακατεύθυνση...' };
                         step = 2;
-                        render(); // Επανασχεδιασμός σε Step 2
+                        render();
                         
                         setTimeout(() => {
-                            // Το app.js περιμένει έναν user (και ειδοποιήσεις, αν τις χρειαζόταν εδώ)
                             onLoginSuccess(data.user);
                         }, 1500);
                     } else {
@@ -77,41 +76,42 @@ export function renderLoginForm(onBack, onLoginSuccess) {
                         render();
                     }
                 } catch (err) {
-                    result = { status: 'error', message: "δεν υπάρχει σύνδεση με τον διακομιστή." };
+                    result = { status: 'error', message: "Δεν υπάρχει σύνδεση με τον διακομιστή." };
                     step = 2;
                     render();
                 }
             });
 
         } else if (step === 2) {
+            const isSuccess = result.status === 'success';
             container.innerHTML = `
-                <div style="padding: 20px 0;">
-                    <h2 style="font-family: var(--font-heading); color: ${result.status === 'success' ? '#8db600' : '#ff4d4d'}; font-size: 2rem; margin: 0 0 10px 0;">
-                        ${result.status === 'success' ? 'επιτυχία!' : 'σφάλμα!'}
+                <div class="fade-in-up" style="padding: 30px 0;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">
+                        ${isSuccess ? '🌱' : '⚠️'}
+                    </div>
+                    <h2 style="font-family: var(--font-heading); color: ${isSuccess ? 'var(--accent-color)' : '#ef4444'}; font-size: 2rem; margin: 0 0 15px 0;">
+                        ${isSuccess ? 'Επιτυχία!' : 'Σφάλμα!'}
                     </h2>
-                    <p style="font-family: var(--font-mono); color: #fff; line-height: 1.6;">
+                    <p style="font-family: var(--font-main); color: var(--text-primary); font-size: 1.1rem; line-height: 1.6;">
                         ${result.message}
                     </p>
-                    ${result.status === 'error' ? `
-                        <button id="btn-retry" class="releaf-button" style="margin-top: 30px;">
-                            δοκιμή ξανά
+                    ${!isSuccess ? `
+                        <button id="btn-retry" class="releaf-button secondary" style="margin-top: 30px; width: 100%;">
+                            Δοκιμή Ξανά
                         </button>
                     ` : ''}
                 </div>
             `;
 
-            // Αν υπάρχει σφάλμα, επιτρέπουμε στο χρήστη να πατήσει "δοκιμή ξανά"
-            if (result.status === 'error') {
+            if (!isSuccess) {
                 container.querySelector('#btn-retry').addEventListener('click', () => {
                     step = 1;
-                    render(); // Επιστροφή στο Step 1
+                    render();
                 });
             }
         }
     }
 
-    // 4. Αρχική Κλήση του Render
     render();
-
     return container;
 }

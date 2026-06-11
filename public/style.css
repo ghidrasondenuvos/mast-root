@@ -1,14 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Jost:wght@400;600;700;800&family=Cinzel:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  --bg-color: #1b181b;
-  --accent-color: rgba(166, 124, 82, 0.85);
-  --accent-hover: rgba(166, 124, 82, 1);
+  --bg-color: #0f172a; /* Deep Slate */
+  --accent-color: #10b981; /* Emerald Green */
+  --accent-hover: #059669; /* Darker Emerald */
+  --secondary-color: #4f46e5; /* Indigo */
+  --secondary-hover: #4338ca; 
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --glass-bg: rgba(15, 23, 42, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.1);
   --font-main: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --font-heading: 'Cinzel', serif;
+  --font-heading: 'Jost', sans-serif;
+  --font-serif: 'Cinzel', serif;
 }
-
 
 /* --- Γενικά Styles Σελίδας --- */
 body, html {
@@ -16,29 +22,30 @@ body, html {
     padding: 0;
     width: 100%;
     height: 100%;
-    background-color: #000; /* Μαύρο φόντο για να κάνει το vignetting του blur μαύρο (όχι άσπρο) */
-    font-family: Arial, sans-serif; 
+    background-color: #000;
+    font-family: var(--font-main); 
+    color: var(--text-primary);
     overflow-x: hidden;
 }
+
+/* Ομαλό Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
 
 /* --- Το Σταθερό Background Image --- */
 #bg-image {
     position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100vw; 
-    height: 100vh;
-    
-    /* Η ΣΩΣΤΗ ΔΙΑΔΡΟΜΗ ΓΙΑ ΤΟΝ EXPRESS SERVER */
+    top: 0; left: 0; 
+    width: 100vw; height: 100vh;
     background-image: url('/assets/tree.jpg'); 
-    
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     z-index: 0;
-    
-    background-blend-mode: multiply; /* Επιτρέπει στο background-color (το tint του app.js) να αναμειχθεί με την εικόνα */
-    transform: scale(1.1); /* Ζουμάρει ελάχιστα την εικόνα για να βγουν οι θολές άκρες του blur ΕΞΩ από την οθόνη */
+    background-blend-mode: multiply; 
+    transform: scale(1.1); 
     transition: all 0.5s ease-in-out; 
 }
 
@@ -51,29 +58,93 @@ body, html {
     z-index: 1;
 }
 
-/* Releaf Inputs & Buttons (Από το index.css) */
+/* --- Glassmorphism Utilities --- */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+.glass-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+/* --- Releaf Inputs & Buttons --- */
 .releaf-button {
-  font-family: var(--font-mono); font-weight: 500; font-size: 1rem;
-  padding: 12px 30px; border-radius: 50px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: var(--accent-color); color: #fff;
-  cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s ease;
+    font-family: var(--font-heading); 
+    font-weight: 600; 
+    font-size: 1rem;
+    padding: 12px 30px; 
+    border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--accent-color); 
+    color: #fff;
+    cursor: pointer; 
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.5px;
 }
 .releaf-button:hover {
-  background: var(--accent-hover);
-  box-shadow: 0 6px 20px rgba(166, 124, 82, 0.4); transform: translateY(-2px);
+    background: var(--accent-hover);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5); 
+    transform: translateY(-2px);
 }
+.releaf-button.secondary {
+    background: transparent;
+    border: 1px solid var(--text-secondary);
+    color: var(--text-primary);
+    box-shadow: none;
+}
+.releaf-button.secondary:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--text-primary);
+}
+
 .releaf-input {
-  font-family: var(--font-mono); width: 100%; padding: 12px; margin: 10px 0;
-  border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(0,0,0,0.4); color: white; box-sizing: border-box;
+    font-family: var(--font-main); 
+    width: 100%; 
+    padding: 14px 16px; 
+    margin: 10px 0;
+    border-radius: 12px; 
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.5); 
+    color: white; 
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: all 0.3s ease;
 }
-.releaf-input:focus { outline: none; border-color: var(--accent-color); }
+.releaf-input::placeholder { color: var(--text-secondary); }
+.releaf-input:focus { 
+    outline: none; 
+    border-color: var(--accent-color); 
+    background: rgba(0,0,0,0.7);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* --- Animations --- */
+.fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* Utilities */
 .hidden { display: none !important; }
 .flex-center { display: flex; align-items: center; justify-content: center; }
-
-/* Spin Animation */
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

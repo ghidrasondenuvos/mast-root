@@ -11,6 +11,7 @@ import { renderCreateCampaignForm } from './components/CreateCampaignForm.js';
 import { renderEnvironmentalNeedsDashboard } from './components/EnvironmentalNeedsDashboard.js';
 import { renderCertificatesDashboard } from './components/CertificatesDashboard.js';
 import { renderBrowseCampaigns } from './components/BrowseCampaigns.js';
+import { renderDashboard } from './components/Dashboard.js';
 
 export const state = {
     currentView: 'home',
@@ -93,7 +94,8 @@ export function renderApp() {
     // Σχεδιασμός Topbar
     if (state.currentView === 'home' || state.currentView === 'dashboard') {
         const topbar = document.createElement('div');
-        topbar.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; box-sizing: border-box; position: relative; z-index: 10;";
+        topbar.className = 'glass-panel';
+        topbar.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; box-sizing: border-box; position: relative; z-index: 10; border-radius: 0; border-top: none; border-left: none; border-right: none;";
         
         topbar.innerHTML = `
             <div style="display: flex; align-items: center; gap: 20px;">
@@ -178,60 +180,8 @@ export function renderApp() {
         root.appendChild(mainContent);
     } 
     else if (state.currentView === 'dashboard' && state.loggedInUser) {
-        const user = state.loggedInUser;
-        const dashContainer = document.createElement('div');
-        dashContainer.style.cssText = "flex: 1; display: flex; flex-direction: column; width: 100%; max-width: 1300px; margin: 0 auto; padding: 0 30px; box-sizing: border-box; margin-top: -2vh;";
-        
-        dashContainer.innerHTML = `
-            <h2 style="font-family: var(--font-mono); color: #fff; font-size: 1.6rem; margin-bottom: 5px; text-shadow: 0px 2px 5px rgba(0,0,0,0.8);">
-                καλώς ήρθες, <span style="color: #10b981;">${user.username}</span>!
-            </h2>
-            <p style="font-family: var(--font-mono); color: #ddd; font-size: 1rem; margin-bottom: 25px;">
-                ${user.account_type === 'sponsor' ? 'εδώ μπορείτε να δείτε καμπάνιες και να προσφέρετε πόρους.' : 'εδώ θα μπορείτε να ελέγχετε την πρόοδό σου και να βρίσκεις δράσεις.'}
-              </p>
-
-            <div style="display: flex; gap: 30px; height: 65vh; width: 100%;">
-                <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;" id="left-column-dash">
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap;" id="dash-buttons-row"></div>
-                </div>
-                
-                <div style="flex: 1.2; background: rgba(27, 24, 27, 0.85); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column;" id="right-column-dash"></div>
-            </div>
-        `;
-
-        const row = dashContainer.querySelector('#dash-buttons-row');
-        if (user.account_type === 'sponsor') {
-            const btnCamp = document.createElement('button');
-            btnCamp.className = "releaf-button";
-            btnCamp.style.cssText = "background: #4f46e5; color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(79,70,229,0.3); flex: 1; margin: 0;";
-            btnCamp.textContent = "💳 Καμπάνιες Χρηματοδότησης";
-            btnCamp.onclick = () => navigate('browse_campaigns');
-            row.appendChild(btnCamp);
-        } else {
-            row.innerHTML = `
-                <button id="dash-create-act" class="releaf-button" style="background: #10b981; color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(16,185,129,0.3); flex: 1; margin: 0;">+ δημιουργία δράσης</button>
-                <button id="dash-create-camp" class="releaf-button" style="background: #4f46e5; color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(79,70,229,0.3); flex: 1; margin: 0;">+ δημιουργία καμπάνιας</button>
-                <button id="dash-manage-req" class="releaf-button" style="position: relative; background: var(--accent-color); color: white; flex: 1; margin: 0;">
-                    διαχείριση αιτήσεων
-                    ${state.pendingRequestsCount > 0 ? `<span style="position: absolute; top: -10px; right: -10px; background: #ff4d4d; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold;">${state.pendingRequestsCount}</span>` : ''}
-                </button>
-            `;
-            row.querySelector('#dash-create-act').onclick = () => navigate('create_action');
-            row.querySelector('#dash-create-camp').onclick = () => navigate('create_campaign');
-            row.querySelector('#dash-manage-req').onclick = () => navigate('manage_requests');
-        }
-
-        const btnDbAdmin = document.createElement('button');
-        btnDbAdmin.className = "releaf-button";
-        btnDbAdmin.style.cssText = "background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color); margin: 0;";
-        btnDbAdmin.textContent = "🛠️ db admin";
-        btnDbAdmin.onclick = () => navigate('db');
-        row.appendChild(btnDbAdmin);
-
-        dashContainer.querySelector('#left-column-dash').appendChild(renderEnvironmentalNeedsDashboard(user));
-        dashContainer.querySelector('#right-column-dash').appendChild(renderSearchActions(user));
-
-        root.appendChild(dashContainer);
+        mainContent.appendChild(renderDashboard(navigate, state));
+        root.appendChild(mainContent);
     }
     else {
         if (state.currentView === 'register') mainContent.appendChild(renderRegistrationForm(() => navigate('home')));
@@ -243,6 +193,12 @@ export function renderApp() {
         if (state.currentView === 'browse_campaigns') mainContent.appendChild(renderBrowseCampaigns(state.loggedInUser, () => navigate('dashboard')));
         if (state.currentView === 'certificates') mainContent.appendChild(renderCertificatesDashboard(state.loggedInUser, () => navigate('dashboard')));
         if (state.currentView === 'db') mainContent.appendChild(renderDatabaseViewer(() => navigate(state.loggedInUser ? 'dashboard' : 'home')));
+        if (state.currentView === 'search') {
+            const container = document.createElement('div');
+            container.style.cssText = "width: 100%; max-width: 800px; margin: 0 auto; padding: 20px;";
+            container.appendChild(renderSearchActions(state.loggedInUser));
+            mainContent.appendChild(container);
+        }
         
         root.appendChild(mainContent);
     }
