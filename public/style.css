@@ -477,6 +477,14 @@ body, html {
     .tab-item { padding: 8px 14px; font-size: 0.8rem; white-space: nowrap; }
     .toast { max-width: 90vw; min-width: unset; }
     #toast-container { right: 10px; left: 10px; }
+
+    /* Feed responsive: grid goes single column */
+    #feed-list { grid-template-columns: 1fr !important; }
+
+    /* Home page: stack vertically */
+    #root > div:nth-child(2) > div { flex-direction: column !important; padding: 20px !important; gap: 30px !important; }
+    #root > div:nth-child(2) > div > div { max-width: 100% !important; }
+    #start-cta-btn { font-size: 1.8rem !important; padding: 20px 40px !important; }
 }
 @media (max-width: 480px) {
     .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -486,4 +494,6 @@ body, html {
     .badge { font-size: 0.7rem; padding: 4px 8px; }
     .search-bar { flex-direction: column; }
     .search-bar input { min-width: unset; }
+    #feed-list { grid-template-columns: 1fr !important; }
+    .glass-panel { padding: 15px !important; }
 }

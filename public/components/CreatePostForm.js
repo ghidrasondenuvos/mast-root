@@ -40,7 +40,10 @@ export function renderCreatePost(navigate, state) {
             
             <input type="text" id="cp-location" class="releaf-input" placeholder="Σημείο Παραλαβής (π.χ. Εστία κτίριο Β, δωμάτιο 12)" />
             
-            <p style="color: #ccc; font-size: 0.8rem; margin: 0;">Επιλέξτε ακριβές σημείο στον χάρτη για αυτόματη εύρεση διεύθυνσης:</p>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <p style="color: #ccc; font-size: 0.8rem; margin: 0; flex: 1;">Επιλέξτε σημείο στον χάρτη ή πατήστε:</p>
+                <button type="button" id="cp-geolocate-btn" class="releaf-button" style="padding: 5px 15px; font-size: 0.8rem; margin: 0; background: #4f46e5;">📍 Εντόπισέ με</button>
+            </div>
             <div id="cp-map" style="height:180px; border-radius:12px; margin-top:-5px; border:1px solid rgba(255,255,255,0.15);"></div>
             
             <div style="display: flex; gap: 10px; display: none;">
@@ -81,6 +84,49 @@ export function renderCreatePost(navigate, state) {
                     console.error('Reverse geocoding failed', err);
                 }
             });
+        }
+
+        // Geolocation button handler
+        const geoBtn = container.querySelector('#cp-geolocate-btn');
+        if (geoBtn && mapEl) {
+            geoBtn.onclick = () => {
+                if (!navigator.geolocation) {
+                    showToast('Ο browser σας δεν υποστηρίζει geolocation.', 'error');
+                    return;
+                }
+                geoBtn.textContent = '⏳ Εντοπισμός...';
+                geoBtn.disabled = true;
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        container.querySelector('#cp-lat').value = lat.toFixed(6);
+                        container.querySelector('#cp-lng').value = lng.toFixed(6);
+
+                        // Center map and add marker
+                        const map = mapEl._leaflet_map || mapEl;
+                        // Find map instance from Leaflet internals
+                        const mapInstance = Object.values(mapEl).find(v => v && v._zoom !== undefined);
+
+                        try {
+                            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                            const data = await res.json();
+                            if (data && data.display_name) {
+                                container.querySelector('#cp-location').value = data.display_name.split(',').slice(0, 2).join(',');
+                            }
+                        } catch(err) { /* ignore */ }
+
+                        geoBtn.textContent = '✅ Εντοπίστηκε!';
+                        showToast('Η τοποθεσία σας εντοπίστηκε!', 'success');
+                    },
+                    (err) => {
+                        geoBtn.textContent = '📍 Εντόπισέ με';
+                        geoBtn.disabled = false;
+                        showToast('Δεν ήταν δυνατός ο εντοπισμός τοποθεσίας.', 'error');
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            };
         }
     }, 100);
 

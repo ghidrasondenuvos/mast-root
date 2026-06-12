@@ -1,11 +1,39 @@
 const express = require('express');
 const path = require('path');
+const bcrypt = require('bcryptjs');
+const session = require('express-session');
 const pool = require('./config/db');
 
 const app = express();
 
 app.use(express.json());
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'unibite-secret-key-2025',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+}));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ==========================================
+// MIDDLEWARE
+// ==========================================
+
+function authenticate(req, res, next) {
+    if (!req.session || !req.session.userId) {
+        return res.status(401).json({ detail: 'Μη εξουσιοδοτημένη πρόσβαση. Παρακαλώ συνδεθείτε.' });
+    }
+    req.userId = req.session.userId;
+    req.userRole = req.session.userRole;
+    next();
+}
+
+function requireAdmin(req, res, next) {
+    if (req.userRole !== 'admin') {
+        return res.status(403).json({ detail: 'Δεν έχετε δικαιώματα διαχειριστή.' });
+    }
+    next();
+}
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -33,6 +61,10 @@ app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        if (!email || !password) {
+            return res.status(400).json({ detail: 'Email και κωδικός είναι υποχρεωτικά.' });
+        }
+
         const [users] = await pool.execute(
             'SELECT id, username, email, password, role, credits, phone, address FROM users WHERE email = ?',
             [email]
@@ -44,9 +76,22 @@ app.post('/login', async (req, res) => {
 
         const user = users[0];
 
-        if (password !== user.password) {
+        // Support both bcrypt and legacy plaintext passwords
+        let passwordMatch = false;
+        if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
+            passwordMatch = await bcrypt.compare(password, user.password);
+        } else {
+            // Legacy plaintext fallback (for existing accounts)
+            passwordMatch = (password === user.password);
+        }
+
+        if (!passwordMatch) {
             return res.status(401).json({ detail: 'Λάθος κωδικός πρόσβασης.' });
         }
+
+        // Set session
+        req.session.userId = user.id;
+        req.session.userRole = user.role;
 
         res.json({
             status: 'success',
@@ -58,10 +103,28 @@ app.post('/login', async (req, res) => {
     }
 });
 
+// Logout
+app.post('/logout', (req, res) => {
+    req.session.destroy();
+    res.json({ status: 'success' });
+});
+
 app.post('/register', async (req, res) => {
     let conn;
     try {
         const { username, email, password } = req.body;
+
+        // Input validation
+        if (!username || !email || !password) {
+            return res.status(400).json({ detail: 'Όλα τα πεδία είναι υποχρεωτικά.' });
+        }
+        if (username.length > 100) {
+            return res.status(400).json({ detail: 'Το username είναι πολύ μεγάλο (max 100 χαρακτήρες).' });
+        }
+        if (password.length < 4) {
+            return res.status(400).json({ detail: 'Ο κωδικός πρέπει να έχει τουλάχιστον 4 χαρακτήρες.' });
+        }
+
         conn = await pool.getConnection();
 
         const [existingUser] = await conn.execute('SELECT id FROM users WHERE username = ? OR email = ?', [username, email]);
@@ -71,9 +134,12 @@ app.post('/register', async (req, res) => {
 
         await conn.beginTransaction();
 
+        // Hash password with bcrypt
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const [result] = await conn.execute(
             'INSERT INTO users (username, email, password, role, credits) VALUES (?, ?, ?, ?, ?)',
-            [username, email, password, 'student', 5]
+            [username, email, hashedPassword, 'student', 5]
         );
 
         const newUserId = result.insertId;
@@ -182,7 +248,7 @@ app.get('/api/users/:id/stats', async (req, res) => {
 // ==========================================
 
 // Create a new post
-app.post('/api/posts', async (req, res) => {
+app.post('/api/posts', authenticate, async (req, res) => {
     try {
         const { cook_id, title, photo_url, notes, allergens, pickup_location, latitude, longitude, pickup_time, total_portions } = req.body;
 
@@ -294,7 +360,7 @@ app.get('/api/posts/search', async (req, res) => {
 });
 
 // Update Post
-app.put('/api/posts/:id', async (req, res) => {
+app.put('/api/posts/:id', authenticate, async (req, res) => {
     try {
         const { title, notes, allergens, pickup_location, pickup_time, available_portions } = req.body;
         await pool.execute(`
@@ -308,7 +374,7 @@ app.put('/api/posts/:id', async (req, res) => {
 });
 
 // Delete Post (Soft Delete)
-app.delete('/api/posts/:id', async (req, res) => {
+app.delete('/api/posts/:id', authenticate, async (req, res) => {
     try {
         await pool.execute("UPDATE posts SET status='deleted' WHERE id=?", [req.params.id]);
         res.json({ status: 'success' });
@@ -489,8 +555,11 @@ app.post('/api/requests/:id/completion', async (req, res) => {
         await conn.execute('UPDATE requests SET status = ? WHERE id = ?', [status, request_id]);
 
         if (status === 'no_show') {
-            // Penalty: Deduct 1 additional credit
-            await conn.execute('UPDATE users SET credits = credits - 1 WHERE id = ?', [consumer_id]);
+            // Penalty: Deduct 1 additional credit (but prevent going below 0)
+            const [creditCheck] = await conn.execute('SELECT credits FROM users WHERE id = ?', [consumer_id]);
+            if (creditCheck[0].credits > 0) {
+                await conn.execute('UPDATE users SET credits = credits - 1 WHERE id = ?', [consumer_id]);
+            }
 
             // Log penalty transaction
             await logCreditTransaction(conn, consumer_id, -1, 'penalty', 'Ποινή - μη εμφάνιση για παραλαβή');
@@ -518,11 +587,17 @@ app.post('/api/requests/:id/completion', async (req, res) => {
 // 5. REVIEWS & CREDITS
 // ==========================================
 
-app.post('/api/reviews', async (req, res) => {
+app.post('/api/reviews', authenticate, async (req, res) => {
     let conn;
     try {
         const { request_id, consumer_id, cook_id, rating } = req.body;
         conn = await pool.getConnection();
+
+        // Check for duplicate review
+        const [existingReview] = await conn.execute('SELECT id FROM reviews WHERE request_id = ?', [request_id]);
+        if (existingReview.length > 0) {
+            return res.status(400).json({ detail: 'Έχετε ήδη αξιολογήσει αυτή τη συναλλαγή.' });
+        }
 
         await conn.beginTransaction();
 
@@ -655,7 +730,7 @@ app.post('/api/buy-credits', async (req, res) => {
 // 8. ADMIN DASHBOARD STATS
 // ==========================================
 
-app.get('/api/admin/stats', async (req, res) => {
+app.get('/api/admin/stats', authenticate, requireAdmin, async (req, res) => {
     try {
         // 1. Total received portions in the last 30 days
         const [received] = await pool.execute(`
@@ -686,7 +761,7 @@ app.get('/api/admin/stats', async (req, res) => {
 });
 
 // Get all users (admin)
-app.get('/api/admin/all-users', async (req, res) => {
+app.get('/api/admin/all-users', authenticate, requireAdmin, async (req, res) => {
     try {
         const [users] = await pool.execute('SELECT id, username, email, role, credits, created_at FROM users ORDER BY created_at DESC');
         res.json(users);
@@ -697,7 +772,7 @@ app.get('/api/admin/all-users', async (req, res) => {
 });
 
 // Admin adjust user credits
-app.put('/api/admin/users/:id/credits', async (req, res) => {
+app.put('/api/admin/users/:id/credits', authenticate, requireAdmin, async (req, res) => {
     let conn;
     try {
         const userId = req.params.id;

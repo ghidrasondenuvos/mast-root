@@ -81,6 +81,7 @@ CREATE INDEX idx_requests_post ON requests(post_id, status);
 CREATE INDEX idx_requests_consumer ON requests(consumer_id, status);
 CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
 CREATE INDEX idx_credit_tx_user ON credit_transactions(user_id);
+CREATE UNIQUE INDEX idx_unique_review ON reviews(request_id);
 
 -- Insert a default Admin
 INSERT INTO users (username, email, password, role, credits) VALUES 

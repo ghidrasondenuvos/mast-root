@@ -10,6 +10,14 @@ import { renderCreditHistory } from './components/CreditHistory.js';
 import { renderNotifications } from './components/Notifications.js';
 import { renderBuyCredits } from './components/BuyCredits.js';
 
+// XSS Sanitization helper
+export function sanitize(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 export const state = {
     currentView: 'home',
     loggedInUser: null,
@@ -157,7 +165,7 @@ export function renderApp() {
             avatarBtn.onclick = () => { dropdown.style.display = dropdown.style.display === 'none' ? 'flex' : 'none'; };
             
             topbar.querySelector('#drop-edit-profile').onclick = () => navigate('profile');
-            topbar.querySelector('#drop-logout').onclick = () => { setLoggedInUser(null); navigate('home'); };
+            topbar.querySelector('#drop-logout').onclick = async () => { await fetch('/logout', { method: 'POST' }); setLoggedInUser(null); navigate('home'); };
             topbar.querySelector('#drop-switch-user').onclick = () => { setLoggedInUser(null); navigate('login'); };
 
             const bellBtn = topbar.querySelector('#notif-bell-btn');
@@ -288,7 +296,8 @@ function renderSidebar() {
             list.querySelector('#side-link-admin').onclick = () => navigate('admin');
         }
 
-        list.querySelector('#side-link-logout').onclick = () => {
+        list.querySelector('#side-link-logout').onclick = async () => {
+            await fetch('/logout', { method: 'POST' });
             state.loggedInUser = null;
             state.notificationCount = 0;
             if (notifInterval) { clearInterval(notifInterval); notifInterval = null; }
