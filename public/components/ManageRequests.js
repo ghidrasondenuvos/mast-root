@@ -69,7 +69,7 @@ export function renderManageRequests(currentUser, onBack, onRequestHandled) {
                         <div class="req-card" data-id="${req.request_id}" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-color); cursor: pointer; transition: background 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
                             <div style="display: flex; justify-content: space-between;">
                                 <h4 style="margin: 0 0 5px 0; color: white; font-family: var(--font-mono);">${req.volunteer_name}</h4>
-                                <span style="font-size: 0.8rem; color: #10b981;">Αναμονή</span>
+                                <span style="font-size: 0.8rem; color: #DA291C;">Αναμονή</span>
                             </div>
                             <p style="margin: 0; font-size: 0.85rem; color: #ccc; font-family: var(--font-mono);">Δράση: ${req.action_title}</p>
                         </div>
@@ -81,20 +81,20 @@ export function renderManageRequests(currentUser, onBack, onRequestHandled) {
         } 
         else if (step === 2 && selectedRequest) {
             html += `
-                <button id="btn-back-list" style="align-self: flex-start; background: transparent; border: none; color: #10b981; cursor: pointer; font-family: var(--font-mono); margin-bottom: 15px; padding: 0;">← Πίσω στη Λίστα</button>
+                <button id="btn-back-list" style="align-self: flex-start; background: transparent; border: none; color: #DA291C; cursor: pointer; font-family: var(--font-mono); margin-bottom: 15px; padding: 0;">← Πίσω στη Λίστα</button>
                 
                 <h2 style="font-family: var(--font-heading); color: white; margin: 0 0 5px 0;">Αίτηση Συμμετοχής</h2>
                 <p style="font-family: var(--font-mono); color: var(--accent-color); margin: 0 0 20px 0;">Δράση: ${selectedRequest.action_title}</p>
                 
                 <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.2);">
-                    <h4 style="color: #10b981; font-family: var(--font-mono); margin: 0 0 15px 0;">Στοιχεία Εθελοντή</h4>
+                    <h4 style="color: #DA291C; font-family: var(--font-mono); margin: 0 0 15px 0;">Στοιχεία Εθελοντή</h4>
                     <p style="margin: 5px 0; color: #ccc; font-family: var(--font-mono);"><strong>Όνομα:</strong> ${selectedRequest.volunteer_name}</p>
                     <p style="margin: 5px 0; color: #ccc; font-family: var(--font-mono);"><strong>Δεξιότητες:</strong> ${selectedRequest.volunteer_skills}</p>
                     <p style="margin: 5px 0; color: #ccc; font-family: var(--font-mono);"><strong>Διαθέσιμα Μέσα:</strong> ${selectedRequest.volunteer_resources}</p>
                 </div>
 
                 <div style="display: flex; gap: 15px; margin-top: auto; padding-top: 20px;">
-                    <button id="btn-approve" class="releaf-button" style="flex: 1; background: #10b981; color: white; margin: 0;">Έγκριση</button>
+                    <button id="btn-approve" class="releaf-button" style="flex: 1; background: #DA291C; color: white; margin: 0;">Έγκριση</button>
                     <button id="btn-reject" class="releaf-button" style="flex: 1; background: #ff4d4d; color: white; border: none; margin: 0;">Απόρριψη</button>
                 </div>
             `;

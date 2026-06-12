@@ -26,8 +26,8 @@ export function renderSearchActions(currentUser) {
                 </button>
                 
                 <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
-                    <h2 style="color: #10b981; font-family: var(--font-heading); margin: 0 0 10px 0;">${selectedAction.title}</h2>
-                    <span style="font-size: 0.8rem; background: rgba(16,185,129,0.2); padding: 5px 10px; border-radius: 20px; color: #10b981;">Διοργάνωση: ${selectedAction.organisation}</span>
+                    <h2 style="color: #DA291C; font-family: var(--font-heading); margin: 0 0 10px 0;">${selectedAction.title}</h2>
+                    <span style="font-size: 0.8rem; background: rgba(218,41,28,0.2); padding: 5px 10px; border-radius: 20px; color: #DA291C;">Διοργάνωση: ${selectedAction.organisation}</span>
                     
                     <p style="font-family: var(--font-mono); color: #ddd; margin-top: 20px; line-height: 1.6;">${selectedAction.description}</p>
                     
@@ -42,10 +42,10 @@ export function renderSearchActions(currentUser) {
 
             if (currentUser && currentUser.account_type === 'volunteer') {
                 if (participationResult.message) {
-                    const color = participationResult.status === 'success' ? '#10b981' : '#ff4d4d';
+                    const color = participationResult.status === 'success' ? '#DA291C' : '#ff4d4d';
                     html += `<p style="color: ${color}; font-family: var(--font-mono); font-size: 1.1rem; font-weight: bold;">${participationResult.message}</p>`;
                 } else {
-                    html += `<button id="btn-participate" class="releaf-button" style="background: #10b981; color: white; font-weight: bold; margin: 0;">Δήλωση Συμμετοχής</button>`;
+                    html += `<button id="btn-participate" class="releaf-button" style="background: #DA291C; color: white; font-weight: bold; margin: 0;">Δήλωση Συμμετοχής</button>`;
                 }
             } else {
                 html += `<p style="color: #ff4d4d; font-family: var(--font-mono); font-size: 0.9rem;">Μόνο λογαριασμοί εθελοντών μπορούν να δηλώσουν συμμετοχή.</p>`;
@@ -76,8 +76,8 @@ export function renderSearchActions(currentUser) {
                 html += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
                 results.forEach(action => {
                     html += `
-                        <div class="action-card" data-id="${action.id}" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; text-align: left; cursor: pointer; transition: background 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
-                            <h4 style="margin: 0 0 5px 0; color: #10b981; font-family: var(--font-mono);">${action.title}</h4>
+                        <div class="action-card" data-id="${action.id}" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #DA291C; text-align: left; cursor: pointer; transition: background 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
+                            <h4 style="margin: 0 0 5px 0; color: #DA291C; font-family: var(--font-mono);">${action.title}</h4>
                             <p style="margin: 0 0 10px 0; font-size: 0.85rem; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${action.description}</p>
                             <span style="font-size: 0.75rem; color: #a67c52; font-family: var(--font-mono);">📍 ${action.location} (Πατήστε για λεπτομέρειες)</span>
                         </div>

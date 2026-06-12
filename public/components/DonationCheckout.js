@@ -53,7 +53,7 @@ export function renderDonationCheckout(currentUser, campaign, onClose, onSuccess
                         </div>
                     ` : ''}
 
-                    <button type="submit" style="width: 100%; padding: 15px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(16,185,129,0.3); font-family: var(--font-mono);">
+                    <button type="submit" style="width: 100%; padding: 15px; background: #DA291C; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(218,41,28,0.3); font-family: var(--font-mono);">
                         Πληρωμή ${form.amount ? `€${form.amount}` : ''}
                     </button>
                     
@@ -67,7 +67,7 @@ export function renderDonationCheckout(currentUser, campaign, onClose, onSuccess
         else if (status === 'processing') {
             html += `
                 <div style="text-align: center; padding: 40px 0;">
-                    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #DA291C; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
                     <p style="margin-top: 20px; color: #666; font-family: var(--font-mono);">Επεξεργασία πληρωμής...</p>
                     <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
                 </div>
@@ -78,7 +78,7 @@ export function renderDonationCheckout(currentUser, campaign, onClose, onSuccess
             html += `
                 <div style="text-align: center; padding: 30px 0;">
                     <div style="font-size: 4rem; margin: 0 0 10px 0;">✅</div>
-                    <h3 style="color: #10b981; margin: 0 0 10px 0; font-family: var(--font-heading);">Επιτυχής Δωρεά!</h3>
+                    <h3 style="color: #DA291C; margin: 0 0 10px 0; font-family: var(--font-heading);">Επιτυχής Δωρεά!</h3>
                     <p style="color: #666; font-size: 0.9rem; margin-bottom: 5px; font-family: var(--font-mono);">${message}</p>
                     <p style="color: #999; font-size: 0.8rem; font-family: var(--font-mono);">Κωδικός Απόδειξης: ${receipt}</p>
                 </div>

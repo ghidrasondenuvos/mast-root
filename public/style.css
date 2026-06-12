@@ -1,18 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Jost:wght@400;600;700;800&family=Cinzel:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
   --bg-color: #0f172a; /* Deep Slate */
-  --accent-color: #10b981; /* Emerald Green */
-  --accent-hover: #059669; /* Darker Emerald */
+  --accent-color: #DA291C; /* McDonald's Red */
+  --accent-hover: #B32015; /* Darker Red */
   --secondary-color: #4f46e5; /* Indigo */
   --secondary-hover: #4338ca; 
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --glass-bg: rgba(15, 23, 42, 0.75);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --font-main: 'DM Sans', sans-serif;
+  --font-main: 'Inter', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --font-heading: 'Jost', sans-serif;
+  --font-heading: 'Inter', -apple-system, sans-serif;
   --font-serif: 'Cinzel', serif;
 }
 
@@ -92,13 +92,13 @@ body, html {
     background: var(--accent-color); 
     color: #fff;
     cursor: pointer; 
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 15px rgba(218, 41, 28, 0.3);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     letter-spacing: 0.5px;
 }
 .releaf-button:hover {
     background: var(--accent-hover);
-    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5); 
+    box-shadow: 0 8px 25px rgba(218, 41, 28, 0.5); 
     transform: translateY(-2px);
 }
 .releaf-button.secondary {
@@ -130,7 +130,7 @@ body, html {
     outline: none; 
     border-color: var(--accent-color); 
     background: rgba(0,0,0,0.7);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    box-shadow: 0 0 0 3px rgba(218, 41, 28, 0.2);
 }
 
 /* --- Animations --- */
@@ -145,6 +145,345 @@ body, html {
 
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+@keyframes smoothPulse {
+    0% { box-shadow: 0 15px 50px rgba(255, 199, 44, 0.6), 0 0 0 0 rgba(218, 41, 28, 0.7); }
+    70% { box-shadow: 0 15px 50px rgba(255, 199, 44, 0.6), 0 0 0 30px rgba(218, 41, 28, 0); }
+    100% { box-shadow: 0 15px 50px rgba(255, 199, 44, 0.6), 0 0 0 0 rgba(218, 41, 28, 0); }
+}
+
+#start-cta-btn {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+#start-cta-btn:hover {
+    transform: translateY(-5px) scale(1.03) !important;
+    box-shadow: 0 25px 60px rgba(218, 41, 28, 0.6), 0 0 25px rgba(255, 199, 44, 0.8) !important;
+    animation: smoothPulse 1.5s infinite;
+}
+
+#start-cta-btn:active {
+    transform: scale(0.95) translateY(2px) !important;
+    box-shadow: 0 5px 15px rgba(218, 41, 28, 0.5) !important;
+    animation: none;
+}
+
 /* Utilities */
 .hidden { display: none !important; }
 .flex-center { display: flex; align-items: center; justify-content: center; }
+
+/* ========================================
+   NEW STYLES - Toast Notification System
+   ======================================== */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+.toast {
+    pointer-events: auto;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    color: #fff;
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 380px;
+    min-width: 280px;
+}
+.toast.removing { animation: toastSlideOut 0.3s ease-in forwards; }
+.toast-success { background: rgba(218, 41, 28, 0.9); }
+.toast-error { background: rgba(239, 68, 68, 0.9); }
+.toast-info { background: rgba(79, 70, 229, 0.9); }
+@keyframes toastSlideIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes toastSlideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100px); } }
+
+/* ========================================
+   Notification Bell
+   ======================================== */
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+    font-size: 1.4rem;
+    padding: 5px;
+    transition: transform 0.2s;
+}
+.notification-bell:hover { transform: scale(1.15); }
+.notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -6px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: bold;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    border: 2px solid rgba(0,0,0,0.3);
+}
+
+/* ========================================
+   Section Panel
+   ======================================== */
+.section-panel {
+    background: rgba(27, 24, 27, 0.85);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.section-title {
+    font-family: var(--font-heading);
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.request-card {
+    background: rgba(255,255,255,0.05);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.2s ease;
+}
+.request-card:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.2);
+}
+
+/* ========================================
+   Status Badges
+   ======================================== */
+.status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+}
+.status-pending { background: rgba(255, 204, 0, 0.15); color: #ffcc00; }
+.status-approved { background: rgba(218, 41, 28, 0.15); color: #DA291C; }
+.status-rejected, .status-no_show { background: rgba(255, 77, 77, 0.15); color: #ff4d4d; }
+.status-received { background: rgba(79, 70, 229, 0.15); color: #4f46e5; }
+
+/* ========================================
+   Search & Filter
+   ======================================== */
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+.search-bar input {
+    flex: 1;
+    min-width: 200px;
+}
+.filter-btn {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.filter-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+.filter-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+
+/* ========================================
+   Credit History
+   ======================================== */
+.credit-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid transparent;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+}
+.credit-entry.positive { border-left-color: #DA291C; }
+.credit-entry.negative { border-left-color: #ef4444; }
+.credit-entry.bonus { border-left-color: #4f46e5; }
+.credit-amount { font-weight: bold; font-size: 1rem; }
+.credit-amount.positive { color: #DA291C; }
+.credit-amount.negative { color: #ef4444; }
+
+/* ========================================
+   User Profile Stats
+   ======================================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.stat-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.stat-card:hover { transform: translateY(-2px); background: rgba(255,255,255,0.08); }
+.stat-value {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    display: block;
+}
+.stat-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    display: block;
+}
+
+/* ========================================
+   Achievement Badges
+   ======================================== */
+.badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 15px 0;
+}
+.badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    border: 1px solid rgba(255,255,255,0.15);
+}
+.badge.earned { background: rgba(218, 41, 28, 0.15); color: #DA291C; border-color: rgba(218, 41, 28, 0.3); }
+.badge.locked { background: rgba(255,255,255,0.03); color: #555; }
+
+/* ========================================
+   Admin Enhancements
+   ======================================== */
+.admin-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.admin-stat-card {
+    background: rgba(27, 24, 27, 0.85);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.3s;
+}
+.admin-stat-card:hover { transform: translateY(-2px); }
+.admin-stat-value { font-size: 2.5rem; font-weight: bold; display: block; }
+.admin-stat-label { color: #aaa; font-size: 0.85rem; margin-top: 5px; display: block; font-family: var(--font-mono); }
+
+/* ========================================
+   Skeleton Loader
+   ======================================== */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ========================================
+   Notifications Panel
+   ======================================== */
+.notifications-panel {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    width: 350px;
+    max-height: 450px;
+    overflow-y: auto;
+    z-index: 999;
+    border-radius: 16px;
+    padding: 0;
+}
+.notif-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.85rem;
+}
+.notif-item:hover { background: rgba(255,255,255,0.05); }
+.notif-item.unread { border-left: 3px solid var(--accent-color); }
+.notif-item .notif-time { font-size: 0.7rem; color: #666; margin-top: 4px; font-family: var(--font-mono); }
+
+/* ========================================
+   Tabs
+   ======================================== */
+.tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.tab-item {
+    font-family: var(--font-mono);
+    padding: 10px 20px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+.tab-item:hover { color: var(--text-primary); }
+.tab-item.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+
+/* ========================================
+   Responsive Media Queries
+   ======================================== */
+@media (max-width: 768px) {
+    .section-panel { padding: 15px; border-radius: 12px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .admin-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .tab-bar { overflow-x: auto; }
+    .tab-item { padding: 8px 14px; font-size: 0.8rem; white-space: nowrap; }
+    .toast { max-width: 90vw; min-width: unset; }
+    #toast-container { right: 10px; left: 10px; }
+}
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-card { padding: 12px; }
+    .stat-value { font-size: 1.5rem; }
+    .badge-row { gap: 6px; }
+    .badge { font-size: 0.7rem; padding: 4px 8px; }
+    .search-bar { flex-direction: column; }
+    .search-bar input { min-width: unset; }
+}

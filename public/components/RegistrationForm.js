@@ -1,3 +1,5 @@
+import { showToast } from '../app.js';
+
 export function renderRegistrationForm(onBack) {
     const container = document.createElement('div');
     container.className = 'glass-panel';
@@ -7,10 +9,10 @@ export function renderRegistrationForm(onBack) {
         <h2 style="font-family: var(--font-heading); color: #fff; margin-bottom: 5px; font-size: 2rem;">Εγγραφή στο UniBite</h2>
         <p style="font-family: var(--font-mono); color: #ccc; font-size: 0.9rem; margin-bottom: 25px;">Μοιράσου το φαγητό σου, κέρδισε credits!</p>
 
-        <form id="reg-form" style="display: flex; flex-direction: column; gap: 15px;">
-            <input type="text" id="reg-username" class="releaf-input" placeholder="Όνομα Χρήστη" required />
-            <input type="email" id="reg-email" class="releaf-input" placeholder="Email" required />
-            <input type="password" id="reg-password" class="releaf-input" placeholder="Κωδικός" required />
+        <form id="reg-form" style="display: flex; flex-direction: column; gap: 15px;" novalidate>
+            <input type="text" id="reg-username" class="releaf-input" placeholder="Όνομα Χρήστη" />
+            <input type="email" id="reg-email" class="releaf-input" placeholder="Email" />
+            <input type="password" id="reg-password" class="releaf-input" placeholder="Κωδικός" />
 
             <button type="submit" class="releaf-button" style="margin-top: 10px;">Εγγραφή</button>
             <button type="button" id="reg-back-btn" class="releaf-button" style="background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.2);">Επιστροφή</button>
@@ -23,10 +25,23 @@ export function renderRegistrationForm(onBack) {
 
     container.querySelector('#reg-form').onsubmit = async (e) => {
         e.preventDefault();
-        const username = container.querySelector('#reg-username').value;
-        const email = container.querySelector('#reg-email').value;
+        const username = container.querySelector('#reg-username').value.trim();
+        const email = container.querySelector('#reg-email').value.trim();
         const password = container.querySelector('#reg-password').value;
         const msgDiv = container.querySelector('#reg-message');
+
+        if (!username || !email || !password) {
+            msgDiv.style.color = '#ff4d4d';
+            msgDiv.textContent = 'Παρακαλώ συμπληρώστε όλα τα πεδία.';
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            msgDiv.style.color = '#ff4d4d';
+            msgDiv.textContent = 'Μη έγκυρη μορφή email.';
+            return;
+        }
 
         try {
             const res = await fetch('/register', {
@@ -37,6 +52,7 @@ export function renderRegistrationForm(onBack) {
 
             const data = await res.json();
             if (res.ok) {
+                showToast(data.message, 'success');
                 container.innerHTML = `
                     <div style="text-align: center; padding: 30px 0; animation: fadeInUp 0.5s ease-out;">
                         <div style="font-size: 4rem; margin-bottom: 15px;">🎉</div>

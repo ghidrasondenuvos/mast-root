@@ -92,7 +92,7 @@ export function renderCertificatesDashboard(currentUser, onBack) {
                   height: 650px;
                   padding: 50px;
                   text-align: center;
-                  border: 15px solid #10b981;
+                  border: 15px solid #DA291C;
                   box-shadow: 0 0 30px rgba(0,0,0,0.5);
                   position: relative;
                   box-sizing: border-box;
@@ -101,10 +101,10 @@ export function renderCertificatesDashboard(currentUser, onBack) {
                   content: '';
                   position: absolute;
                   top: 10px; left: 10px; right: 10px; bottom: 10px;
-                  border: 2px dashed #10b981;
+                  border: 2px dashed #DA291C;
                 }
                 .logo { font-size: 2.5rem; font-weight: bold; color: #1b181b; letter-spacing: 5px; margin-bottom: 20px; }
-                .title { font-family: 'Playfair Display', serif; font-size: 3.5rem; color: #10b981; margin: 0 0 20px 0; }
+                .title { font-family: 'Playfair Display', serif; font-size: 3.5rem; color: #DA291C; margin: 0 0 20px 0; }
                 .subtitle { font-size: 1.2rem; color: #666; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; }
                 .name { font-family: 'Playfair Display', serif; font-size: 3rem; color: #1b181b; margin: 20px 0; border-bottom: 2px solid #ccc; display: inline-block; padding: 0 50px; }
                 .action { font-size: 1.5rem; color: #4f46e5; font-weight: bold; margin: 30px 0; }
@@ -139,14 +139,14 @@ export function renderCertificatesDashboard(currentUser, onBack) {
     function render() {
         let html = `
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(27, 24, 27, 0.9); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                <h3 style="font-family: var(--font-heading); color: #10b981; margin: 0; font-size: 1.8rem;">🏆 Τα Πιστοποιητικά μου</h3>
+                <h3 style="font-family: var(--font-heading); color: #DA291C; margin: 0; font-size: 1.8rem;">🏆 Τα Πιστοποιητικά μου</h3>
                 <button id="btn-back" class="releaf-button" style="padding: 5px 15px; font-size: 0.85rem; background: transparent; border: 1px solid white; margin: 0;">Πίσω</button>
             </div>
         `;
 
         if (resultMsg.text) {
-            const bgColor = resultMsg.status === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(255,77,77,0.2)';
-            const txtColor = resultMsg.status === 'success' ? '#10b981' : '#ff4d4d';
+            const bgColor = resultMsg.status === 'success' ? 'rgba(218,41,28,0.2)' : 'rgba(255,77,77,0.2)';
+            const txtColor = resultMsg.status === 'success' ? '#DA291C' : '#ff4d4d';
             html += `
                 <div style="padding: 10px; background: ${bgColor}; color: ${txtColor}; border-radius: 8px; font-family: var(--font-mono); text-align: center; font-weight: bold; margin-top: 10px;">
                     ${resultMsg.text}
@@ -186,7 +186,7 @@ export function renderCertificatesDashboard(currentUser, onBack) {
                     </div>
 
                     <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                        <h4 style="color: #10b981; font-family: var(--font-mono); margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Διαθέσιμα Πιστοποιητικά</h4>
+                        <h4 style="color: #DA291C; font-family: var(--font-mono); margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Διαθέσιμα Πιστοποιητικά</h4>
                         <div style="display: flex; flex-direction: column; gap: 10px;">
             `;
 
@@ -195,13 +195,13 @@ export function renderCertificatesDashboard(currentUser, onBack) {
             } else {
                 certificates.forEach(cert => {
                     html += `
-                        <div style="background: rgba(16,185,129,0.1); padding: 15px; border-radius: 8px; border: 1px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="background: rgba(218,41,28,0.1); padding: 15px; border-radius: 8px; border: 1px solid #DA291C; display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <strong style="color: #10b981; display: block; margin-bottom: 5px; font-family: var(--font-mono); font-size: 0.95rem;">${cert.action_title}</strong>
+                                <strong style="color: #DA291C; display: block; margin-bottom: 5px; font-family: var(--font-mono); font-size: 0.95rem;">${cert.action_title}</strong>
                                 <span style="font-size: 0.75rem; color: #ccc; display: block; font-family: var(--font-mono);">Ημ/νία: ${cert.issue_date}</span>
                                 <span style="font-size: 0.7rem; color: #a67c52; display: block; font-family: var(--font-mono); margin-top: 3px;">ID: #${cert.id}</span>
                             </div>
-                            <button class="btn-print releaf-button" data-id="${cert.id}" style="padding: 5px 10px; font-size: 0.75rem; background: transparent; border: 1px solid #10b981; color: #10b981; margin: 0;">📄 Λήψη PDF</button>
+                            <button class="btn-print releaf-button" data-id="${cert.id}" style="padding: 5px 10px; font-size: 0.75rem; background: transparent; border: 1px solid #DA291C; color: #DA291C; margin: 0;">📄 Λήψη PDF</button>
                         </div>
                     `;
                 });

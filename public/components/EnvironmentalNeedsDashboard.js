@@ -90,8 +90,8 @@ export function renderEnvironmentalNeedsDashboard(currentUser) {
 
         // Εμφάνιση Μηνύματος (Success/Error)
         if (resultMsg.text) {
-            const bgColor = resultMsg.status === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(255,193,7,0.2)';
-            const txtColor = resultMsg.status === 'success' ? '#10b981' : '#fbbf24';
+            const bgColor = resultMsg.status === 'success' ? 'rgba(218,41,28,0.2)' : 'rgba(255,193,7,0.2)';
+            const txtColor = resultMsg.status === 'success' ? '#DA291C' : '#fbbf24';
             html += `
                 <div style="padding: 10px 20px; background: ${bgColor}; color: ${txtColor}; font-family: var(--font-mono); font-size: 0.9rem; text-align: center; font-weight: bold;">
                     ${resultMsg.text}
@@ -132,7 +132,7 @@ export function renderEnvironmentalNeedsDashboard(currentUser) {
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="font-size: 0.75rem; color: #8db600; font-family: var(--font-mono);">📍 ${p.location}</div>
                             
-                            <button class="btn-convert" data-id="${p.id}" style="background: #10b981; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: var(--font-mono); font-size: 0.75rem; font-weight: bold;">
+                            <button class="btn-convert" data-id="${p.id}" style="background: #DA291C; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: var(--font-mono); font-size: 0.75rem; font-weight: bold;">
                                 🚀 Ανάληψη Δράσης
                             </button>
                         </div>

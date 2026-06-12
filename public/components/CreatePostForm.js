@@ -1,46 +1,120 @@
+import { showToast } from '../app.js';
+
 export function renderCreatePost(navigate, state) {
     const container = document.createElement('div');
     container.className = 'glass-panel';
     container.style.cssText = "width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 30px; animation: fadeInUp 0.5s ease-out;";
 
+    if (!state.loggedInUser.phone || !state.loggedInUser.address) {
+        container.innerHTML = `
+            <div style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 15px;">⚠️</div>
+                <h2 style="font-family: var(--font-heading); color: #ff4d4d; margin-bottom: 15px;">Απαιτούνται Στοιχεία</h2>
+                <p style="color: #ccc; margin-bottom: 25px; line-height: 1.6;">
+                    Για να μπορέσεις να δημιουργήσεις μια νέα αγγελία και να δώσεις φαγητό, είναι απαραίτητο να συμπληρώσεις πρώτα 
+                    το <strong>Τηλέφωνο Επικοινωνίας</strong> και τη <strong>Διεύθυνση / Σχολή</strong> στο προφίλ σου.
+                </p>
+                <button id="go-profile-btn" class="releaf-button">Ενημέρωση Προφίλ</button>
+            </div>
+        `;
+        container.querySelector('#go-profile-btn').onclick = () => navigate('profile');
+        return container;
+    }
+
     container.innerHTML = `
         <h2 style="font-family: var(--font-heading); color: #fff; margin-bottom: 25px; text-align: center;">Νέα Αγγελία Φαγητού</h2>
-        <form id="create-post-form" style="display: flex; flex-direction: column; gap: 15px;">
-            <input type="text" id="cp-title" class="releaf-input" placeholder="Τι μαγείρεψες; (π.χ. Παστίτσιο)" required />
-            <input type="number" id="cp-portions" class="releaf-input" placeholder="Αριθμός Μερίδων (π.χ. 3)" min="1" required />
+        <form id="create-post-form" style="display: flex; flex-direction: column; gap: 15px;" novalidate>
+            <input type="text" id="cp-title" class="releaf-input" placeholder="Τι μαγείρεψες; (π.χ. Παστίτσιο)" />
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="cp-portions" class="releaf-input" placeholder="Μερίδες" min="1" style="flex: 1;" />
+                <div style="flex: 2; display: flex; gap: 5px; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.8rem;">Από:</span>
+                    <input type="time" id="cp-time-from" class="releaf-input" style="padding: 5px;" />
+                    <span style="color: var(--text-secondary); font-size: 0.8rem;">Έως:</span>
+                    <input type="time" id="cp-time-to" class="releaf-input" style="padding: 5px;" />
+                </div>
+            </div>
             
             <textarea id="cp-notes" class="releaf-input" placeholder="Λίγα λόγια ή σημειώσεις..." style="height: 80px; resize: none;"></textarea>
-            <input type="text" id="cp-allergens" class="releaf-input" placeholder="Γνωστά Αλλεργιογόνα (π.χ. Γάλα, Αυγά) ή αφήστε κενό" />
+            <input type="text" id="cp-allergens" class="releaf-input" placeholder="Αλλεργιογόνα (π.χ. Γάλα, Αυγά) ή αφήστε κενό" />
             
-            <input type="text" id="cp-location" class="releaf-input" placeholder="Σημείο Παραλαβής (π.χ. Εστία κτίριο Β, δωμάτιο 12)" required />
-            <input type="text" id="cp-time" class="releaf-input" placeholder="Ώρες παραλαβής (π.χ. 14:00 - 16:00)" required />
+            <input type="text" id="cp-location" class="releaf-input" placeholder="Σημείο Παραλαβής (π.χ. Εστία κτίριο Β, δωμάτιο 12)" />
             
-            <p style="color: #ccc; font-size: 0.8rem; margin: 0;">Για τον χάρτη (Προαιρετικό):</p>
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="cp-lat" class="releaf-input" placeholder="Γεωγραφικό Πλάτος (Latitude)" step="any" style="flex: 1;" />
-                <input type="number" id="cp-lng" class="releaf-input" placeholder="Γεωγραφικό Μήκος (Longitude)" step="any" style="flex: 1;" />
+            <p style="color: #ccc; font-size: 0.8rem; margin: 0;">Επιλέξτε ακριβές σημείο στον χάρτη για αυτόματη εύρεση διεύθυνσης:</p>
+            <div id="cp-map" style="height:180px; border-radius:12px; margin-top:-5px; border:1px solid rgba(255,255,255,0.15);"></div>
+            
+            <div style="display: flex; gap: 10px; display: none;">
+                <input type="number" id="cp-lat" class="releaf-input" placeholder="Lat" step="any" />
+                <input type="number" id="cp-lng" class="releaf-input" placeholder="Lng" step="any" />
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 15px;">
                 <button type="submit" class="releaf-button" style="flex: 1;">Δημοσίευση</button>
-                <button type="button" id="cp-cancel" class="releaf-button" style="flex: 1; background: transparent; border: 1px solid rgba(255,255,255,0.2);">Ακύρωση</button>
+                <button type="button" id="cp-cancel" class="releaf-button secondary" style="flex: 1;">Ακύρωση</button>
             </div>
             <div id="cp-msg" style="color: #ff4d4d; font-size: 0.9rem; text-align: center;"></div>
         </form>
     `;
 
-    container.querySelector('#cp-cancel').onclick = () => navigate('feed');
+    setTimeout(() => {
+        const mapEl = container.querySelector('#cp-map');
+        if (mapEl) {
+            const map = L.map(mapEl).setView([38.287, 21.788], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+            let marker = null;
+            map.on('click', async (e) => {
+                const { lat, lng } = e.latlng;
+                container.querySelector('#cp-lat').value = lat.toFixed(6);
+                container.querySelector('#cp-lng').value = lng.toFixed(6);
+                if (marker) map.removeLayer(marker);
+                marker = L.marker([lat, lng]).addTo(map);
+
+                // Reverse Geocoding
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                    const data = await res.json();
+                    if (data && data.display_name) {
+                        const shortAddress = data.display_name.split(',').slice(0, 2).join(',');
+                        container.querySelector('#cp-location').value = shortAddress;
+                    }
+                } catch(err) {
+                    console.error('Reverse geocoding failed', err);
+                }
+            });
+        }
+    }, 100);
+
+    container.querySelector('#cp-cancel').onclick = () => navigate('dashboard');
 
     container.querySelector('#create-post-form').onsubmit = async (e) => {
         e.preventDefault();
+        
+        const title = container.querySelector('#cp-title').value.trim();
+        const portions = container.querySelector('#cp-portions').value;
+        const timeFrom = container.querySelector('#cp-time-from').value;
+        const timeTo = container.querySelector('#cp-time-to').value;
+        const loc = container.querySelector('#cp-location').value.trim();
+        const msgDiv = container.querySelector('#cp-msg');
+        
+        if (!title || !portions || !timeFrom || !timeTo || !loc) {
+            msgDiv.textContent = 'Παρακαλώ συμπληρώστε τα βασικά πεδία (Τίτλος, Μερίδες, Ώρα, Σημείο).';
+            return;
+        }
+        
+        if (timeFrom >= timeTo) {
+            msgDiv.textContent = 'Η ώρα λήξης πρέπει να είναι μετά την ώρα έναρξης.';
+            return;
+        }
+
+        const time = `${timeFrom} - ${timeTo}`;
         const payload = {
             cook_id: state.loggedInUser.id,
-            title: container.querySelector('#cp-title').value,
-            total_portions: parseInt(container.querySelector('#cp-portions').value),
+            title: title,
+            total_portions: parseInt(portions),
             notes: container.querySelector('#cp-notes').value,
             allergens: container.querySelector('#cp-allergens').value,
-            pickup_location: container.querySelector('#cp-location').value,
-            pickup_time: container.querySelector('#cp-time').value,
+            pickup_location: loc,
+            pickup_time: time,
             latitude: container.querySelector('#cp-lat').value ? parseFloat(container.querySelector('#cp-lat').value) : null,
             longitude: container.querySelector('#cp-lng').value ? parseFloat(container.querySelector('#cp-lng').value) : null,
             photo_url: null
@@ -54,7 +128,7 @@ export function renderCreatePost(navigate, state) {
             });
             const data = await res.json();
             if (res.ok) {
-                alert('Η αγγελία δημιουργήθηκε επιτυχώς!');
+                showToast('Η αγγελία δημιουργήθηκε επιτυχώς!', 'success');
                 navigate('dashboard');
             } else {
                 container.querySelector('#cp-msg').textContent = data.detail;

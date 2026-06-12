@@ -26,6 +26,7 @@ CREATE TABLE posts (
     available_portions INT NOT NULL,
     status ENUM('active', 'inactive', 'deleted') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (cook_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -35,6 +36,7 @@ CREATE TABLE requests (
     consumer_id INT NOT NULL,
     status ENUM('pending', 'approved', 'rejected', 'received', 'no_show') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (consumer_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -45,11 +47,40 @@ CREATE TABLE reviews (
     consumer_id INT NOT NULL,
     cook_id INT NOT NULL,
     rating INT CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
     FOREIGN KEY (consumer_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (cook_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type ENUM('request_approved','request_rejected','new_request','received','no_show','credit_earned','welcome') DEFAULT 'welcome',
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    reference_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE credit_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    amount INT NOT NULL,
+    type ENUM('earned','spent','penalty','bonus','welcome') DEFAULT 'earned',
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Performance indexes
+CREATE INDEX idx_posts_cook_status ON posts(cook_id, status);
+CREATE INDEX idx_requests_post ON requests(post_id, status);
+CREATE INDEX idx_requests_consumer ON requests(consumer_id, status);
+CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
+CREATE INDEX idx_credit_tx_user ON credit_transactions(user_id);
 
 -- Insert a default Admin
 INSERT INTO users (username, email, password, role, credits) VALUES 

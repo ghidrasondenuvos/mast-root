@@ -63,7 +63,7 @@ export function renderBrowseCampaigns(currentUser, onBack) {
                         
                         <div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-family: var(--font-mono); margin-bottom: 5px;">
-                                <span style="color: #10b981; font-weight: bold;">Συγκεντρώθηκαν: €${camp.current_amount}</span>
+                                <span style="color: #DA291C; font-weight: bold;">Συγκεντρώθηκαν: €${camp.current_amount}</span>
                                 <span style="color: #ccc;">Στόχος: €${camp.goal_amount}</span>
                             </div>
                             <div style="width: 100%; background: rgba(255,255,255,0.1); height: 10px; border-radius: 5px; overflow: hidden;">
