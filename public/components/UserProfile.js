@@ -18,7 +18,7 @@ export function renderUserProfile(navigate, state) {
             </div>
             <div style="margin-left: auto; text-align: right;">
                 <div style="color: #DA291C; font-family: var(--font-mono); font-weight: bold; font-size: 1.5rem;">
-                    🪙 ${user.credits}
+                     ${user.credits}
                 </div>
                 <div style="font-size: 0.8rem; color: var(--text-secondary);">Διαθέσιμα Credits</div>
             </div>
@@ -89,20 +89,20 @@ export function renderUserProfile(navigate, state) {
             let badgesHtml = '';
             
             // First Cook Badge
-            if (stats.total_portions_shared >= 1) badgesHtml += '<div class="badge earned">🍳 Πρώτη Μαγειρική</div>';
-            else badgesHtml += '<div class="badge locked">🔒 Πρώτη Μαγειρική</div>';
+            if (stats.total_portions_shared >= 1) badgesHtml += '<div class="badge earned"> Πρώτη Μαγειρική</div>';
+            else badgesHtml += '<div class="badge locked"> Πρώτη Μαγειρική</div>';
 
             // 10 Portions Badge
-            if (stats.total_portions_shared >= 10) badgesHtml += '<div class="badge earned">🏆 10 Μερίδες!</div>';
-            else badgesHtml += '<div class="badge locked">🔒 10 Μερίδες</div>';
+            if (stats.total_portions_shared >= 10) badgesHtml += '<div class="badge earned"> 10 Μερίδες!</div>';
+            else badgesHtml += '<div class="badge locked"> 10 Μερίδες</div>';
 
             // Top Chef Badge
             if (stats.avg_rating_as_cook >= 4.5 && stats.total_portions_shared >= 5) badgesHtml += '<div class="badge earned">⭐ Top Chef</div>';
-            else badgesHtml += '<div class="badge locked">🔒 Top Chef</div>';
+            else badgesHtml += '<div class="badge locked"> Top Chef</div>';
 
             // First Order Badge
-            if (stats.total_portions_received >= 1) badgesHtml += '<div class="badge earned">🎯 Πρωτάρης</div>';
-            else badgesHtml += '<div class="badge locked">🔒 Πρωτάρης</div>';
+            if (stats.total_portions_received >= 1) badgesHtml += '<div class="badge earned"> Πρωτάρης</div>';
+            else badgesHtml += '<div class="badge locked"> Πρωτάρης</div>';
 
             badgeRow.innerHTML = badgesHtml;
         })

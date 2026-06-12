@@ -6,7 +6,7 @@ export function renderBuyCredits(navigate, state) {
 
     container.innerHTML = `
         <div class="section-panel" style="text-align: center;">
-            <h2 class="section-title" style="color: #DA291C;">Αγορά Credits 🪙</h2>
+            <h2 class="section-title" style="color: #DA291C;">Αγορά Credits </h2>
             <p style="color: #ccc; margin-bottom: 20px; font-size: 0.95rem;">
                 Μπορείς να κερδίσεις credits προσφέροντας φαγητό δωρεάν ή μπορείς να αγοράσεις επιπλέον αν χρειάζεσαι άμεσα!
             </p>

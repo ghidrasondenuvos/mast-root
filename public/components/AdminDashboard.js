@@ -5,7 +5,7 @@ export function renderAdminDashboard(navigate, state) {
     container.style.cssText = "width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; animation: fadeInUp 0.5s ease-out;";
 
     container.innerHTML = `
-        <h2 style="font-family: var(--font-heading); color: #ff4d4d; margin-bottom: 20px;">🛠️ Admin Dashboard</h2>
+        <h2 style="font-family: var(--font-heading); color: #ff4d4d; margin-bottom: 20px;">️ Admin Dashboard</h2>
         
         <div class="admin-stat-grid" id="admin-stats-container">
             <div class="admin-stat-card skeleton" style="height: 100px;"></div>
@@ -14,7 +14,7 @@ export function renderAdminDashboard(navigate, state) {
         </div>
 
         <div class="section-panel" style="margin-bottom: 20px;">
-            <h3 class="section-title" style="color: #fff;">🏆 Leaderboard (Top Donors)</h3>
+            <h3 class="section-title" style="color: #fff;"> Leaderboard (Top Donors)</h3>
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; color: #ccc; font-family: var(--font-mono); font-size: 0.9rem;" id="admin-leaderboard">
                     <thead>
@@ -32,7 +32,7 @@ export function renderAdminDashboard(navigate, state) {
         </div>
 
         <div class="section-panel">
-            <h3 class="section-title" style="color: #fff;">👥 Διαχείριση Χρηστών</h3>
+            <h3 class="section-title" style="color: #fff;"> Διαχείριση Χρηστών</h3>
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; color: #ccc; font-family: var(--font-mono); font-size: 0.9rem;" id="admin-users-table">
                     <thead>

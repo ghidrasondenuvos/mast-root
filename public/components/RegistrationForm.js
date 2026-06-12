@@ -14,6 +14,10 @@ export function renderRegistrationForm(onBack) {
             <input type="email" id="reg-email" class="releaf-input" placeholder="Email" />
             <input type="password" id="reg-password" class="releaf-input" placeholder="Κωδικός" />
 
+            <div style="display: flex; gap: 10px; margin-top: -5px; justify-content: center;">
+                <button type="button" id="btn-fill-test" style="background: rgba(46, 170, 220, 0.2); color: #2eaadc; border: 1px solid #2eaadc; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer;">Autofill Test User</button>
+            </div>
+
             <button type="submit" class="releaf-button" style="margin-top: 10px;">Εγγραφή</button>
             <button type="button" id="reg-back-btn" class="releaf-button" style="background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.2);">Επιστροφή</button>
         </form>
@@ -22,6 +26,12 @@ export function renderRegistrationForm(onBack) {
     `;
 
     container.querySelector('#reg-back-btn').onclick = onBack;
+    container.querySelector('#btn-fill-test').onclick = () => {
+        const rnd = Math.floor(Math.random() * 10000);
+        container.querySelector('#reg-username').value = 'testuser_' + rnd;
+        container.querySelector('#reg-email').value = 'test' + rnd + '@unibite.gr';
+        container.querySelector('#reg-password').value = 'pass123';
+    };
 
     container.querySelector('#reg-form').onsubmit = async (e) => {
         e.preventDefault();
@@ -55,7 +65,7 @@ export function renderRegistrationForm(onBack) {
                 showToast(data.message, 'success');
                 container.innerHTML = `
                     <div style="text-align: center; padding: 30px 0; animation: fadeInUp 0.5s ease-out;">
-                        <div style="font-size: 4rem; margin-bottom: 15px;">🎉</div>
+                        <div style="font-size: 4rem; margin-bottom: 15px;"></div>
                         <h2 style="font-family: var(--font-heading); color: var(--accent-color); margin-bottom: 10px;">Καλώς ήρθες!</h2>
                         <p style="font-family: var(--font-mono); color: #ddd; margin-bottom: 25px;">${data.message}</p>
                         <button id="success-back-btn" class="releaf-button">Επιστροφή στην Αρχική</button>

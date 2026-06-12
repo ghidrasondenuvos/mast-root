@@ -49,16 +49,16 @@ export function renderCreateActionForm(currentUser, onBack) {
                             <span style="${labelStyle}">ΤΥΠΟΣ ΔΡΑΣΗΣ</span>
                             <select class="releaf-input" id="act-type" style="width: 100%; box-sizing: border-box; margin: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer;">
                                 <option value="" disabled ${!formState.action_type_name ? 'selected' : ''}>Επιλέξτε Κατηγορία...</option>
-                                <option value="Δενδροφύτευση" ${formState.action_type_name === 'Δενδροφύτευση' ? 'selected' : ''}>🌳 Δενδροφύτευση</option>
-                                <option value="Καθαρισμός Παραλίας" ${formState.action_type_name === 'Καθαρισμός Παραλίας' ? 'selected' : ''}>🏖️ Καθαρισμός Παραλίας</option>
-                                <option value="Καθαρισμός Δάσους" ${formState.action_type_name === 'Καθαρισμός Δάσους' ? 'selected' : ''}>🌲 Καθαρισμός Δάσους</option>
-                                <option value="Ανακύκλωση / Κυκλική Οικονομία" ${formState.action_type_name === 'Ανακύκλωση / Κυκλική Οικονομία' ? 'selected' : ''}>♻️ Ανακύκλωση / Κυκλική Οικονομία</option>
-                                <option value="Προστασία Πανίδας" ${formState.action_type_name === 'Προστασία Πανίδας' ? 'selected' : ''}>🦊 Προστασία Πανίδας</option>
-                                <option value="Πυροπροστασία / Δασοπροστασία" ${formState.action_type_name === 'Πυροπροστασία / Δασοπροστασία' ? 'selected' : ''}>🔥 Πυροπροστασία / Δασοπροστασία</option>
-                                <option value="Διάσωση & Περίθαλψη Ζώων" ${formState.action_type_name === 'Διάσωση & Περίθαλψη Ζώων' ? 'selected' : ''}>🐾 Διάσωση & Περίθαλψη Ζώων</option>
-                                <option value="Περιβαλλοντική Εκπαίδευση" ${formState.action_type_name === 'Περιβαλλοντική Εκπαίδευση' ? 'selected' : ''}>📚 Περιβαλλοντική Εκπαίδευση</option>
-                                <option value="Φροντίδα Αστικού Πρασίνου" ${formState.action_type_name === 'Φροντίδα Αστικού Πρασίνου' ? 'selected' : ''}>🏙️ Φροντίδα Αστικού Πρασίνου</option>
-                                <option value="Αποκατάσταση Τοπίου" ${formState.action_type_name === 'Αποκατάσταση Τοπίου' ? 'selected' : ''}>⛰️ Αποκατάσταση Τοπίου</option>
+                                <option value="Δενδροφύτευση" ${formState.action_type_name === 'Δενδροφύτευση' ? 'selected' : ''}> Δενδροφύτευση</option>
+                                <option value="Καθαρισμός Παραλίας" ${formState.action_type_name === 'Καθαρισμός Παραλίας' ? 'selected' : ''}>️ Καθαρισμός Παραλίας</option>
+                                <option value="Καθαρισμός Δάσους" ${formState.action_type_name === 'Καθαρισμός Δάσους' ? 'selected' : ''}> Καθαρισμός Δάσους</option>
+                                <option value="Ανακύκλωση / Κυκλική Οικονομία" ${formState.action_type_name === 'Ανακύκλωση / Κυκλική Οικονομία' ? 'selected' : ''}>️ Ανακύκλωση / Κυκλική Οικονομία</option>
+                                <option value="Προστασία Πανίδας" ${formState.action_type_name === 'Προστασία Πανίδας' ? 'selected' : ''}> Προστασία Πανίδας</option>
+                                <option value="Πυροπροστασία / Δασοπροστασία" ${formState.action_type_name === 'Πυροπροστασία / Δασοπροστασία' ? 'selected' : ''}> Πυροπροστασία / Δασοπροστασία</option>
+                                <option value="Διάσωση & Περίθαλψη Ζώων" ${formState.action_type_name === 'Διάσωση & Περίθαλψη Ζώων' ? 'selected' : ''}> Διάσωση & Περίθαλψη Ζώων</option>
+                                <option value="Περιβαλλοντική Εκπαίδευση" ${formState.action_type_name === 'Περιβαλλοντική Εκπαίδευση' ? 'selected' : ''}> Περιβαλλοντική Εκπαίδευση</option>
+                                <option value="Φροντίδα Αστικού Πρασίνου" ${formState.action_type_name === 'Φροντίδα Αστικού Πρασίνου' ? 'selected' : ''}>️ Φροντίδα Αστικού Πρασίνου</option>
+                                <option value="Αποκατάσταση Τοπίου" ${formState.action_type_name === 'Αποκατάσταση Τοπίου' ? 'selected' : ''}>️ Αποκατάσταση Τοπίου</option>
                             </select>
                         </div>
                     </div>

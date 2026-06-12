@@ -32,9 +32,9 @@ export function renderSearchActions(currentUser) {
                     <p style="font-family: var(--font-mono); color: #ddd; margin-top: 20px; line-height: 1.6;">${selectedAction.description}</p>
                     
                     <div style="display: flex; gap: 20px; margin-top: 20px; color: #a67c52; font-family: var(--font-mono); font-size: 0.9rem;">
-                        <span>📍 ${selectedAction.location}</span>
-                        <span>🏷️ ${selectedAction.action_type}</span>
-                        <span>👥 Όριο: ${selectedAction.max_participants} θέσεις</span>
+                        <span> ${selectedAction.location}</span>
+                        <span>️ ${selectedAction.action_type}</span>
+                        <span> Όριο: ${selectedAction.max_participants} θέσεις</span>
                     </div>
 
                     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
@@ -57,7 +57,7 @@ export function renderSearchActions(currentUser) {
         else {
             html += `
                 <h3 style="font-family: var(--font-heading); color: var(--accent-color); margin: 0 0 5px 0; font-size: 1.4rem;">
-                    🔍 Αναζήτηση Δράσεων
+                     Αναζήτηση Δράσεων
                 </h3>
                 
                 <form id="search-form" style="display: flex; flex-wrap: wrap; gap: 10px;">
@@ -79,7 +79,7 @@ export function renderSearchActions(currentUser) {
                         <div class="action-card" data-id="${action.id}" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #DA291C; text-align: left; cursor: pointer; transition: background 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
                             <h4 style="margin: 0 0 5px 0; color: #DA291C; font-family: var(--font-mono);">${action.title}</h4>
                             <p style="margin: 0 0 10px 0; font-size: 0.85rem; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${action.description}</p>
-                            <span style="font-size: 0.75rem; color: #a67c52; font-family: var(--font-mono);">📍 ${action.location} (Πατήστε για λεπτομέρειες)</span>
+                            <span style="font-size: 0.75rem; color: #a67c52; font-family: var(--font-mono);"> ${action.location} (Πατήστε για λεπτομέρειες)</span>
                         </div>
                     `;
                 });

@@ -19,7 +19,7 @@ export function renderCreditHistory(navigate, state) {
                     <h2 style="font-family: var(--font-heading); color: #fff; margin: 0;">Ιστορικό Credits</h2>
                 </div>
                 <div style="font-family: var(--font-mono); color: #DA291C; font-weight: bold; font-size: 1.2rem;">
-                    🪙 ${user.credits}
+                     ${user.credits}
                 </div>
             </div>
         ` : `<h2 style="font-family: var(--font-heading); color: #fff; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Ιστορικό Credits</h2>`}

@@ -7,18 +7,18 @@ export function renderFeed(navigate, state) {
     container.innerHTML = `
         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 35px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.8); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px;">
-                <h2 style="color: #111; font-family: var(--font-heading); font-size: 2rem; font-weight: 800; margin: 0; letter-spacing: -0.02em;">✨ Διαθέσιμες Μερίδες</h2>
+                <h2 style="color: #111; font-family: var(--font-heading); font-size: 2rem; font-weight: 800; margin: 0; letter-spacing: -0.02em;"> Διαθέσιμες Μερίδες</h2>
             </div>
             
             <div style="margin-top: 10px; margin-bottom: 25px; position: relative;">
-                <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: #888;">🔍</span>
+                <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: #888;"></span>
                 <input type="text" id="feed-search" placeholder="Αναζήτηση φαγητού..." style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 12px; border: 2px solid #e9e9e7; background: #fff; color: #333; font-family: var(--font-main); font-size: 1.05rem; outline: none; box-sizing: border-box; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.02);" onfocus="this.style.borderColor='#2eaadc'; this.style.boxShadow='0 8px 20px rgba(46,170,220,0.15)';" onblur="this.style.borderColor='#e9e9e7'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.02)';" />
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:25px; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px;" id="feed-filters">
                 <button class="notion-filter" data-filter="all" style="background: linear-gradient(135deg, #2eaadc, #1ca0d3); color: #fff; border: none; border-radius: 20px; padding: 6px 16px; font-size: 0.9rem; font-family: var(--font-main); font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(46,170,220,0.3);">Όλα</button>
                 <button class="notion-filter" data-filter="no-gluten" style="background: #f5f5f5; color: #666; border: none; border-radius: 20px; padding: 6px 16px; font-size: 0.9rem; font-family: var(--font-main); font-weight: 500; cursor: pointer; transition: all 0.2s;">Χωρίς Γλουτένη</button>
                 <button class="notion-filter" data-filter="no-dairy" style="background: #f5f5f5; color: #666; border: none; border-radius: 20px; padding: 6px 16px; font-size: 0.9rem; font-family: var(--font-main); font-weight: 500; cursor: pointer; transition: all 0.2s;">Χωρίς Γαλακτοκομικά</button>
-                <button class="notion-filter" data-filter="vegan" style="background: #f5f5f5; color: #666; border: none; border-radius: 20px; padding: 6px 16px; font-size: 0.9rem; font-family: var(--font-main); font-weight: 500; cursor: pointer; transition: all 0.2s;">Vegan 🌱</button>
+                <button class="notion-filter" data-filter="vegan" style="background: #f5f5f5; color: #666; border: none; border-radius: 20px; padding: 6px 16px; font-size: 0.9rem; font-family: var(--font-main); font-weight: 500; cursor: pointer; transition: all 0.2s;">Vegan </button>
             </div>
 
             <div id="feed-list" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; padding: 10px 5px 30px 5px; align-content: start;">
@@ -74,7 +74,7 @@ export function renderFeed(navigate, state) {
         });
 
         if (filtered.length === 0) {
-            listContainer.innerHTML = '<p style="grid-column: 1 / -1; color: #888; font-family: var(--font-main); text-align: center; margin-top: 40px; font-size: 1.1rem;">Δεν βρέθηκαν αποτελέσματα. 🍽️</p>';
+            listContainer.innerHTML = '<p style="grid-column: 1 / -1; color: #888; font-family: var(--font-main); text-align: center; margin-top: 40px; font-size: 1.1rem;">Δεν βρέθηκαν αποτελέσματα. ️</p>';
             return;
         }
 
@@ -95,11 +95,11 @@ export function renderFeed(navigate, state) {
                     
                     <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
                         <div style="display: flex; align-items: center; gap: 8px; color: #666; font-size: 0.95rem; font-family: var(--font-main);">
-                            <span style="background: #f5f5f5; padding: 4px; border-radius: 6px; font-size: 0.85rem;">👨‍🍳</span> 
+                            <span style="background: #f5f5f5; padding: 4px; border-radius: 6px; font-size: 0.85rem;">‍</span> 
                             <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${post.cook_name}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; color: #666; font-size: 0.95rem; font-family: var(--font-main);">
-                            <span style="background: #f5f5f5; padding: 4px; border-radius: 6px; font-size: 0.85rem;">📍</span> 
+                            <span style="background: #f5f5f5; padding: 4px; border-radius: 6px; font-size: 0.85rem;"></span> 
                             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${post.pickup_location}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; color: #666; font-size: 0.95rem; font-family: var(--font-main);">
@@ -108,7 +108,7 @@ export function renderFeed(navigate, state) {
                         </div>
                     </div>
                     
-                    ${post.allergens ? `<div style="margin-bottom: 15px;"><span style="background: rgba(218, 41, 28, 0.08); color: #DA291C; padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; font-family: var(--font-main); font-weight: 600; display: inline-block;">⚠️ ${post.allergens}</span></div>` : ''}
+                    ${post.allergens ? `<div style="margin-bottom: 15px;"><span style="background: rgba(218, 41, 28, 0.08); color: #DA291C; padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; font-family: var(--font-main); font-weight: 600; display: inline-block;">️ ${post.allergens}</span></div>` : ''}
                 </div>
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 15px; border-top: 1px solid #f5f5f5;">

@@ -80,7 +80,7 @@ export function renderEnvironmentalNeedsDashboard(currentUser) {
         let html = `
             <div style="padding: 15px 20px; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; font-family: var(--font-heading); color: #8db600; font-size: 1.2rem;">
-                    🌍 Ανάλυση Περιβαλλοντικών Αναγκών
+                     Ανάλυση Περιβαλλοντικών Αναγκών
                 </h3>
                 <button id="btn-analyze" class="releaf-button" style="margin: 0; padding: 5px 15px; font-size: 0.8rem; background: #8db600;" ${analyzing ? 'disabled' : ''}>
                     ${analyzing ? 'Ανάλυση...' : 'Εκτέλεση Σάρωσης'}
@@ -130,10 +130,10 @@ export function renderEnvironmentalNeedsDashboard(currentUser) {
                         <p style="margin: 5px 0 10px 0; color: #ccc; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.4;">${p.description}</p>
                         
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="font-size: 0.75rem; color: #8db600; font-family: var(--font-mono);">📍 ${p.location}</div>
+                            <div style="font-size: 0.75rem; color: #8db600; font-family: var(--font-mono);"> ${p.location}</div>
                             
                             <button class="btn-convert" data-id="${p.id}" style="background: #DA291C; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: var(--font-mono); font-size: 0.75rem; font-weight: bold;">
-                                🚀 Ανάληψη Δράσης
+                                 Ανάληψη Δράσης
                             </button>
                         </div>
                     </div>

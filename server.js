@@ -34,7 +34,7 @@ app.post('/login', async (req, res) => {
         const { email, password } = req.body;
 
         const [users] = await pool.execute(
-            'SELECT id, username, email, password, role, credits FROM users WHERE email = ?',
+            'SELECT id, username, email, password, role, credits, phone, address FROM users WHERE email = ?',
             [email]
         );
 
@@ -50,7 +50,7 @@ app.post('/login', async (req, res) => {
 
         res.json({
             status: 'success',
-            user: { id: user.id, username: user.username, email: user.email, role: user.role, credits: user.credits }
+            user: { id: user.id, username: user.username, email: user.email, role: user.role, credits: user.credits, phone: user.phone, address: user.address }
         });
     } catch (error) {
         console.error(error);

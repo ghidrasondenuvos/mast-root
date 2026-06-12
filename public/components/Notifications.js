@@ -65,10 +65,10 @@ export function renderNotifications(navigate, state) {
                     else if (diff > 3600000) timeStr = `πριν ${Math.floor(diff/3600000)} ώρες`;
                     else if (diff > 60000) timeStr = `πριν ${Math.floor(diff/60000)} λεπτά`;
 
-                    let icon = '🔔';
-                    if (notif.type === 'credit_earned' || notif.type === 'welcome') icon = '🪙';
-                    if (notif.type === 'request_approved' || notif.type === 'received') icon = '✅';
-                    if (notif.type === 'request_rejected' || notif.type === 'no_show') icon = '❌';
+                    let icon = '';
+                    if (notif.type === 'credit_earned' || notif.type === 'welcome') icon = '';
+                    if (notif.type === 'request_approved' || notif.type === 'received') icon = '';
+                    if (notif.type === 'request_rejected' || notif.type === 'no_show') icon = '';
 
                     el.innerHTML = `
                         <div style="display: flex; gap: 10px; align-items: flex-start;">

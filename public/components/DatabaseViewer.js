@@ -38,7 +38,7 @@ export function renderDatabaseViewer(onBack) {
         let html = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="font-family: var(--font-mono); color: var(--accent-color); margin: 0; font-size: 1.5rem;">
-                    🛠️ db admin (UniBite)
+                    ️ db admin (UniBite)
                 </h2>
                 
                 <div style="display: flex; gap: 10px; overflow-x: auto;">

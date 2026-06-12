@@ -77,7 +77,7 @@ export function renderDonationCheckout(currentUser, campaign, onClose, onSuccess
         else if (status === 'success') {
             html += `
                 <div style="text-align: center; padding: 30px 0;">
-                    <div style="font-size: 4rem; margin: 0 0 10px 0;">✅</div>
+                    <div style="font-size: 4rem; margin: 0 0 10px 0;"></div>
                     <h3 style="color: #DA291C; margin: 0 0 10px 0; font-family: var(--font-heading);">Επιτυχής Δωρεά!</h3>
                     <p style="color: #666; font-size: 0.9rem; margin-bottom: 5px; font-family: var(--font-mono);">${message}</p>
                     <p style="color: #999; font-size: 0.8rem; font-family: var(--font-mono);">Κωδικός Απόδειξης: ${receipt}</p>

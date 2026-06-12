@@ -63,7 +63,7 @@ export function renderLoginForm(onBack, onSuccess) {
             if (res.ok) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 30px 0; animation: fadeInUp 0.5s ease-out;">
-                        <div style="font-size: 4rem; margin-bottom: 15px;">🍲</div>
+                        <div style="font-size: 4rem; margin-bottom: 15px;"></div>
                         <h2 style="font-family: var(--font-heading); color: var(--accent-color); margin-bottom: 10px;">Επιτυχής Σύνδεση!</h2>
                         <p style="font-family: var(--font-mono); color: #ddd; margin-bottom: 25px;">Καλώς ήρθες, ${data.user.username}</p>
                     </div>

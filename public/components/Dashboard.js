@@ -10,7 +10,7 @@ export function renderDashboard(navigate, state) {
 
     container.innerHTML = `
         <div style="background: rgba(218, 41, 28, 0.15); border: 1px solid rgba(218, 41, 28, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-            <h3 style="margin: 0 0 10px 0; color: #DA291C; font-family: var(--font-heading);">👋 Καλώς ήρθες, ${user.username}!</h3>
+            <h3 style="margin: 0 0 10px 0; color: #DA291C; font-family: var(--font-heading);"> Καλώς ήρθες, ${user.username}!</h3>
             <p style="margin: 0; color: #ddd; font-family: var(--font-mono); font-size: 0.95rem; line-height: 1.5;">
                 Αυτό είναι το Dashboard σου. Εδώ μπορείς να διαχειριστείς τα <strong>Αιτήματα</strong> (ό,τι έχεις ζητήσει ή ό,τι σου έχουν ζητήσει), 
                 να δεις το <strong>Ιστορικό Credits</strong> σου και να παρακολουθήσεις τις <strong>Ειδοποιήσεις</strong> σου, όλα σε ένα σημείο!
@@ -20,7 +20,7 @@ export function renderDashboard(navigate, state) {
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
             <h2 style="font-family: var(--font-heading); color: #fff; margin: 0;">Το Dashboard μου</h2>
             <div style="font-family: var(--font-mono); color: #DA291C; font-weight: bold; font-size: 1.2rem;">
-                🪙 ${user.credits}
+                 ${user.credits}
             </div>
         </div>
 
@@ -71,7 +71,7 @@ export function renderDashboard(navigate, state) {
             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                 <!-- COOK SECTION -->
                 <div class="section-panel" style="flex: 1; min-width: 300px;">
-                    <h3 class="section-title" style="color: #DA291C;">👨‍🍳 Ως Μάγειρας</h3>
+                    <h3 class="section-title" style="color: #DA291C;">‍ Ως Μάγειρας</h3>
                     <div id="cook-requests-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
                         <p style="color: #aaa; font-size: 0.9rem;">Φόρτωση...</p>
                     </div>
@@ -79,7 +79,7 @@ export function renderDashboard(navigate, state) {
 
                 <!-- CONSUMER SECTION -->
                 <div class="section-panel" style="flex: 1; min-width: 300px;">
-                    <h3 class="section-title" style="color: #4f46e5;">🍽️ Ως Καταναλωτής</h3>
+                    <h3 class="section-title" style="color: #4f46e5;">️ Ως Καταναλωτής</h3>
                     <div id="consumer-requests-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
                         <p style="color: #aaa; font-size: 0.9rem;">Φόρτωση...</p>
                     </div>

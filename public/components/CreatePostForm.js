@@ -8,7 +8,7 @@ export function renderCreatePost(navigate, state) {
     if (!state.loggedInUser.phone || !state.loggedInUser.address) {
         container.innerHTML = `
             <div style="text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 15px;">⚠️</div>
+                <div style="font-size: 3rem; margin-bottom: 15px;">️</div>
                 <h2 style="font-family: var(--font-heading); color: #ff4d4d; margin-bottom: 15px;">Απαιτούνται Στοιχεία</h2>
                 <p style="color: #ccc; margin-bottom: 25px; line-height: 1.6;">
                     Για να μπορέσεις να δημιουργήσεις μια νέα αγγελία και να δώσεις φαγητό, είναι απαραίτητο να συμπληρώσεις πρώτα 

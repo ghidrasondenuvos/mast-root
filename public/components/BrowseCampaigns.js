@@ -30,7 +30,7 @@ export function renderBrowseCampaigns(currentUser, onBack) {
     function render() {
         let html = `
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(27, 24, 27, 0.9); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                <h3 style="font-family: var(--font-heading); color: #4f46e5; margin: 0; font-size: 1.8rem;">🤝 Ενεργές Καμπάνιες</h3>
+                <h3 style="font-family: var(--font-heading); color: #4f46e5; margin: 0; font-size: 1.8rem;"> Ενεργές Καμπάνιες</h3>
                 <button id="btn-back" class="releaf-button" style="padding: 5px 15px; font-size: 0.85rem; background: transparent; border: 1px solid white; margin: 0;">Πίσω</button>
             </div>
         `;

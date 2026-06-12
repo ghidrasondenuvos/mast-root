@@ -139,7 +139,7 @@ export function renderCertificatesDashboard(currentUser, onBack) {
     function render() {
         let html = `
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(27, 24, 27, 0.9); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                <h3 style="font-family: var(--font-heading); color: #DA291C; margin: 0; font-size: 1.8rem;">🏆 Τα Πιστοποιητικά μου</h3>
+                <h3 style="font-family: var(--font-heading); color: #DA291C; margin: 0; font-size: 1.8rem;"> Τα Πιστοποιητικά μου</h3>
                 <button id="btn-back" class="releaf-button" style="padding: 5px 15px; font-size: 0.85rem; background: transparent; border: 1px solid white; margin: 0;">Πίσω</button>
             </div>
         `;
@@ -201,7 +201,7 @@ export function renderCertificatesDashboard(currentUser, onBack) {
                                 <span style="font-size: 0.75rem; color: #ccc; display: block; font-family: var(--font-mono);">Ημ/νία: ${cert.issue_date}</span>
                                 <span style="font-size: 0.7rem; color: #a67c52; display: block; font-family: var(--font-mono); margin-top: 3px;">ID: #${cert.id}</span>
                             </div>
-                            <button class="btn-print releaf-button" data-id="${cert.id}" style="padding: 5px 10px; font-size: 0.75rem; background: transparent; border: 1px solid #DA291C; color: #DA291C; margin: 0;">📄 Λήψη PDF</button>
+                            <button class="btn-print releaf-button" data-id="${cert.id}" style="padding: 5px 10px; font-size: 0.75rem; background: transparent; border: 1px solid #DA291C; color: #DA291C; margin: 0;"> Λήψη PDF</button>
                         </div>
                     `;
                 });
