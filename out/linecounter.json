@@ -1,0 +1,257 @@
+{
+    "extension": "linecounter",
+    "version": "0.2.7",
+    "workspace": "c:\\Users\\Sophia Giakmoglidou\\Desktop\\mast-root",
+    "linecount": [
+        {
+            "version": "0.2.7",
+            "counttime": "2026-06-12 15:13:35",
+            "filesum": 32,
+            "codesum": 5176,
+            "commentsum": 208,
+            "blanksum": 494,
+            "statistics": {
+                ".json": {
+                    "code": 1931,
+                    "comment": 0,
+                    "blank": 0
+                },
+                "": {
+                    "code": 31,
+                    "comment": 1,
+                    "blank": 12
+                },
+                ".js": {
+                    "code": 2625,
+                    "comment": 132,
+                    "blank": 423
+                },
+                ".css": {
+                    "code": 464,
+                    "comment": 71,
+                    "blank": 43
+                },
+                ".html": {
+                    "code": 24,
+                    "comment": 2,
+                    "blank": 4
+                },
+                ".md": {
+                    "code": 22,
+                    "comment": 0,
+                    "blank": 4
+                },
+                ".txt": {
+                    "code": 1,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".sql": {
+                    "code": 78,
+                    "comment": 2,
+                    "blank": 8
+                }
+            },
+            "filelist": [
+                {
+                    "blank": 5,
+                    "code": 18,
+                    "comment": 1,
+                    "filename": ".gitignore"
+                },
+                {
+                    "blank": 0,
+                    "code": 12,
+                    "comment": 0,
+                    "filename": "config\\db.js"
+                },
+                {
+                    "blank": 8,
+                    "code": 78,
+                    "comment": 2,
+                    "filename": "config\\unibite_db.sql"
+                },
+                {
+                    "blank": 1,
+                    "code": 8,
+                    "comment": 0,
+                    "filename": "fix.js"
+                },
+                {
+                    "blank": 2,
+                    "code": 15,
+                    "comment": 0,
+                    "filename": "init_db.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1914,
+                    "comment": 0,
+                    "filename": "package-lock.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 17,
+                    "comment": 0,
+                    "filename": "package.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "pdfpath.txt"
+                },
+                {
+                    "blank": 32,
+                    "code": 316,
+                    "comment": 12,
+                    "filename": "public\\app.js"
+                },
+                {
+                    "filename": "public\\assets\\bell.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "public\\assets\\logo.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "public\\assets\\test_render.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "public\\assets\\tree.gif",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "public\\assets\\tree.jpg",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 15,
+                    "code": 174,
+                    "comment": 4,
+                    "filename": "public\\components\\AdminDashboard.js"
+                },
+                {
+                    "blank": 28,
+                    "code": 136,
+                    "comment": 4,
+                    "filename": "public\\components\\BuyCredits.js"
+                },
+                {
+                    "blank": 35,
+                    "code": 197,
+                    "comment": 7,
+                    "filename": "public\\components\\CreatePostForm.js"
+                },
+                {
+                    "blank": 17,
+                    "code": 98,
+                    "comment": 0,
+                    "filename": "public\\components\\CreditHistory.js"
+                },
+                {
+                    "blank": 22,
+                    "code": 248,
+                    "comment": 1,
+                    "filename": "public\\components\\Dashboard.js"
+                },
+                {
+                    "blank": 14,
+                    "code": 153,
+                    "comment": 0,
+                    "filename": "public\\components\\DatabaseViewer.js"
+                },
+                {
+                    "blank": 31,
+                    "code": 174,
+                    "comment": 6,
+                    "filename": "public\\components\\Feed.js"
+                },
+                {
+                    "blank": 13,
+                    "code": 66,
+                    "comment": 0,
+                    "filename": "public\\components\\LoginForm.js"
+                },
+                {
+                    "blank": 19,
+                    "code": 106,
+                    "comment": 1,
+                    "filename": "public\\components\\Notifications.js"
+                },
+                {
+                    "blank": 15,
+                    "code": 80,
+                    "comment": 0,
+                    "filename": "public\\components\\RegistrationForm.js"
+                },
+                {
+                    "blank": 25,
+                    "code": 157,
+                    "comment": 5,
+                    "filename": "public\\components\\UserProfile.js"
+                },
+                {
+                    "blank": 4,
+                    "code": 24,
+                    "comment": 2,
+                    "filename": "public\\index.html"
+                },
+                {
+                    "blank": 43,
+                    "code": 464,
+                    "comment": 71,
+                    "filename": "public\\style.css"
+                },
+                {
+                    "blank": 13,
+                    "code": 75,
+                    "comment": 0,
+                    "filename": "seed_db.js"
+                },
+                {
+                    "blank": 141,
+                    "code": 610,
+                    "comment": 92,
+                    "filename": "server.js"
+                },
+                {
+                    "blank": 4,
+                    "code": 22,
+                    "comment": 0,
+                    "filename": "TECHNICAL_PROPOSALS.md"
+                },
+                {
+                    "blank": 7,
+                    "code": 13,
+                    "comment": 0,
+                    "filename": "TEKT"
+                },
+                {
+                    "filename": "εκφώνηση_2025_26_v1 (1).pdf",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                }
+            ]
+        }
+    ]
+}

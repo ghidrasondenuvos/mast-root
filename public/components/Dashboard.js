@@ -1,33 +1,34 @@
-import { showToast } from '../app.js';
+import { showToast, sanitize } from '../app.js';
 import { renderCreditHistory } from './CreditHistory.js';
 import { renderNotifications } from './Notifications.js';
 
 export function renderDashboard(navigate, state) {
     const container = document.createElement('div');
-    container.style.cssText = "width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; animation: fadeInUp 0.5s ease-out;";
+    container.className = 'fade-in-up';
+    container.style.cssText = "width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column;";
 
     const user = state.loggedInUser;
 
     container.innerHTML = `
-        <div style="background: rgba(218, 41, 28, 0.15); border: 1px solid rgba(218, 41, 28, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-            <h3 style="margin: 0 0 10px 0; color: #DA291C; font-family: var(--font-heading);"> Καλώς ήρθες, ${user.username}!</h3>
-            <p style="margin: 0; color: #ddd; font-family: var(--font-mono); font-size: 0.95rem; line-height: 1.5;">
-                Αυτό είναι το Dashboard σου. Εδώ μπορείς να διαχειριστείς τα <strong>Αιτήματα</strong> (ό,τι έχεις ζητήσει ή ό,τι σου έχουν ζητήσει), 
-                να δεις το <strong>Ιστορικό Credits</strong> σου και να παρακολουθήσεις τις <strong>Ειδοποιήσεις</strong> σου, όλα σε ένα σημείο!
-            </p>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
-            <h2 style="font-family: var(--font-heading); color: #fff; margin: 0;">Το Dashboard μου</h2>
-            <div style="font-family: var(--font-mono); color: #DA291C; font-weight: bold; font-size: 1.2rem;">
-                 ${user.credits}
+        <div class="glass-panel" style="padding: var(--space-xl); margin-bottom: var(--space-lg); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md);">
+            <div>
+                <h2 class="font-heading" style="margin: 0 0 var(--space-xs) 0; color: var(--text-primary); font-size: 2rem; font-weight: 800;">
+                    Καλώς ήρθες, <span style="background: linear-gradient(135deg, var(--accent), #FBBF24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${sanitize(user.username)}</span>!
+                </h2>
+                <p style="margin: 0; color: var(--text-secondary); font-size: 0.95rem;">
+                    Διαχειρίσου τα αιτήματά σου, παρακολούθησε τα credits σου και δες τις ειδοποιήσεις σου.
+                </p>
+            </div>
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-lg); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px;">Υπόλοιπο</span>
+                <div class="font-heading" style="color: var(--accent); font-weight: 800; font-size: 2rem; line-height: 1;">${user.credits} <span style="font-size: 1rem; color: var(--accent);">credits</span></div>
             </div>
         </div>
 
-        <div class="tab-bar" style="display: flex; gap: 10px; border-bottom: 2px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
-            <button class="tab-item active" data-tab="requests" style="background: none; border: none; color: #fff; padding: 10px 20px; cursor: pointer; font-family: var(--font-heading); font-size: 1.1rem; border-bottom: 3px solid #DA291C; opacity: 1;">Αιτήματα</button>
-            <button class="tab-item" data-tab="history" style="background: none; border: none; color: #fff; padding: 10px 20px; cursor: pointer; font-family: var(--font-heading); font-size: 1.1rem; border-bottom: 3px solid transparent; opacity: 0.6;">Ιστορικό Credits</button>
-            <button class="tab-item" data-tab="notifications" style="background: none; border: none; color: #fff; padding: 10px 20px; cursor: pointer; font-family: var(--font-heading); font-size: 1.1rem; border-bottom: 3px solid transparent; opacity: 0.6;">Ειδοποιήσεις</button>
+        <div class="tab-bar">
+            <button class="tab-item active" data-tab="requests">Αιτήματα & Παραδόσεις</button>
+            <button class="tab-item" data-tab="history">Ιστορικό Credits</button>
+            <button class="tab-item" data-tab="notifications">Ειδοποιήσεις <span class="badge" style="background: var(--danger); color: white; padding: 2px 6px; font-size: 0.7rem; border: none; margin-left: 6px; display: ${state.notificationCount > 0 ? 'inline-block' : 'none'};">${state.notificationCount}</span></button>
         </div>
 
         <div id="tab-content" style="width: 100%;">
@@ -40,25 +41,19 @@ export function renderDashboard(navigate, state) {
 
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
-            tabs.forEach(t => {
-                t.classList.remove('active');
-                t.style.borderBottomColor = 'transparent';
-                t.style.opacity = '0.6';
-            });
-            e.target.classList.add('active');
-            e.target.style.borderBottomColor = '#DA291C';
-            e.target.style.opacity = '1';
-            renderTab(e.target.getAttribute('data-tab'));
+            tabs.forEach(t => t.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            renderTab(e.currentTarget.getAttribute('data-tab'));
         });
     });
 
     function renderTab(tabName) {
         tabContent.innerHTML = '';
+        tabContent.className = 'fade-in';
         if (tabName === 'requests') {
             renderRequestsTab();
         } else if (tabName === 'history') {
             const histComp = renderCreditHistory(navigate, state);
-            // Remove the title/padding of the original component if desired, but adding it directly is fine
             tabContent.appendChild(histComp);
         } else if (tabName === 'notifications') {
             const notifComp = renderNotifications(navigate, state);
@@ -68,20 +63,28 @@ export function renderDashboard(navigate, state) {
 
     function renderRequestsTab() {
         tabContent.innerHTML = `
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div style="display: flex; gap: var(--space-xl); flex-wrap: wrap; align-items: flex-start;">
                 <!-- COOK SECTION -->
-                <div class="section-panel" style="flex: 1; min-width: 300px;">
-                    <h3 class="section-title" style="color: #DA291C;">‍ Ως Μάγειρας</h3>
-                    <div id="cook-requests-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                        <p style="color: #aaa; font-size: 0.9rem;">Φόρτωση...</p>
+                <div class="glass-panel" style="flex: 1; min-width: 320px; padding: var(--space-lg);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-md); border-bottom: 1px solid var(--border); padding-bottom: var(--space-sm);">
+                        <span style="font-size: 1.5rem;">👨‍🍳</span>
+                        <h3 class="font-heading" style="margin: 0; font-size: 1.2rem; color: var(--accent);">Ως Μάγειρας</h3>
+                    </div>
+                    <div id="cook-requests-list" style="display: flex; flex-direction: column; gap: var(--space-md); max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                        <div class="skeleton" style="height: 100px; border-radius: var(--radius-md);"></div>
+                        <div class="skeleton" style="height: 100px; border-radius: var(--radius-md);"></div>
                     </div>
                 </div>
 
                 <!-- CONSUMER SECTION -->
-                <div class="section-panel" style="flex: 1; min-width: 300px;">
-                    <h3 class="section-title" style="color: #4f46e5;">️ Ως Καταναλωτής</h3>
-                    <div id="consumer-requests-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                        <p style="color: #aaa; font-size: 0.9rem;">Φόρτωση...</p>
+                <div class="glass-panel" style="flex: 1; min-width: 320px; padding: var(--space-lg);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-md); border-bottom: 1px solid var(--border); padding-bottom: var(--space-sm);">
+                        <span style="font-size: 1.5rem;">🍽️</span>
+                        <h3 class="font-heading" style="margin: 0; font-size: 1.2rem; color: var(--secondary);">Ως Καταναλωτής</h3>
+                    </div>
+                    <div id="consumer-requests-list" style="display: flex; flex-direction: column; gap: var(--space-md); max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                        <div class="skeleton" style="height: 100px; border-radius: var(--radius-md);"></div>
+                        <div class="skeleton" style="height: 100px; border-radius: var(--radius-md);"></div>
                     </div>
                 </div>
             </div>
@@ -99,35 +102,45 @@ export function renderDashboard(navigate, state) {
                 if (!list) return;
                 list.innerHTML = '';
                 if (requests.length === 0) {
-                    list.innerHTML = '<p style="color: #aaa; font-size: 0.9rem;">Δεν υπάρχουν εισερχόμενα αιτήματα.</p>';
+                    list.innerHTML = `
+                        <div style="text-align: center; padding: var(--space-xl) 0; opacity: 0.6;">
+                            <div style="font-size: 2.5rem; margin-bottom: 8px;">📭</div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Δεν υπάρχουν αιτήματα για το φαγητό σας.</p>
+                        </div>
+                    `;
                     return;
                 }
 
-                requests.forEach(req => {
+                requests.forEach((req, idx) => {
                     const card = document.createElement('div');
-                    card.className = 'request-card';
+                    card.className = 'glass-card stagger';
+                    card.style.animationDelay = `${idx * 0.05}s`;
+                    card.style.padding = 'var(--space-md)';
                     card.innerHTML = `
-                        <div style="font-weight: bold; color: #fff;">${req.post_title}</div>
-                        <div style="color: #ccc; font-size: 0.85rem; margin-bottom: 5px;">Από: ${req.consumer_name}</div>
-                        <div style="margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-family: var(--font-heading); font-size: 1.05rem;">${sanitize(req.post_title)}</div>
                             <span class="status-badge status-${req.status}">${req.status}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: var(--space-md);">
+                            <span style="width: 20px; height: 20px; border-radius: 50%; background: var(--surface-elevated); display: inline-flex; align-items: center; justify-content: center; font-size: 0.6rem;">👤</span>
+                            Ζητήθηκε από: <strong>${sanitize(req.consumer_name)}</strong>
                         </div>
                     `;
 
                     if (req.status === 'pending') {
                         card.innerHTML += `
-                            <div style="display: flex; gap: 5px;">
-                                <button class="approve-btn releaf-button" style="padding: 3px 10px; font-size: 0.8rem; background: #DA291C; margin: 0;">Αποδοχή</button>
-                                <button class="reject-btn releaf-button" style="padding: 3px 10px; font-size: 0.8rem; background: #ff4d4d; margin: 0;">Απόρριψη</button>
+                            <div style="display: flex; gap: 8px; margin-top: auto;">
+                                <button class="releaf-button approve-btn" style="flex: 1; padding: 6px 12px; font-size: 0.8rem; background: var(--success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">Αποδοχή</button>
+                                <button class="releaf-button danger reject-btn" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">Απόρριψη</button>
                             </div>
                         `;
                         card.querySelector('.approve-btn').onclick = () => handleDecision(req.id, 'approved');
                         card.querySelector('.reject-btn').onclick = () => handleDecision(req.id, 'rejected');
                     } else if (req.status === 'approved') {
                         card.innerHTML += `
-                            <div style="display: flex; gap: 5px;">
-                                <button class="received-btn releaf-button" style="padding: 3px 10px; font-size: 0.8rem; background: #4f46e5; margin: 0;">Παραδόθηκε</button>
-                                <button class="noshow-btn releaf-button secondary" style="padding: 3px 10px; font-size: 0.8rem; border-color: #ff4d4d; color: #ff4d4d; margin: 0;">No-Show</button>
+                            <div style="display: flex; gap: 8px; margin-top: auto;">
+                                <button class="releaf-button indigo received-btn" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">Παραδόθηκε ✓</button>
+                                <button class="releaf-button danger noshow-btn" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">Δεν Εμφανίστηκε</button>
                             </div>
                         `;
                         card.querySelector('.received-btn').onclick = () => handleCompletion(req.id, 'received');
@@ -146,32 +159,45 @@ export function renderDashboard(navigate, state) {
                 if (!list) return;
                 list.innerHTML = '';
                 if (requests.length === 0) {
-                    list.innerHTML = '<p style="color: #aaa; font-size: 0.9rem;">Δεν έχεις ζητήσει κάποια μερίδα ακόμα.</p>';
+                    list.innerHTML = `
+                        <div style="text-align: center; padding: var(--space-xl) 0; opacity: 0.6;">
+                            <div style="font-size: 2.5rem; margin-bottom: 8px;">🍽️</div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Δεν έχεις ζητήσει κάποια μερίδα ακόμα.</p>
+                        </div>
+                    `;
                     return;
                 }
 
-                requests.forEach(req => {
+                requests.forEach((req, idx) => {
                     const card = document.createElement('div');
-                    card.className = 'request-card';
+                    card.className = 'glass-card stagger';
+                    card.style.animationDelay = `${idx * 0.05}s`;
+                    card.style.padding = 'var(--space-md)';
                     card.innerHTML = `
-                        <div style="font-weight: bold; color: #fff;">${req.post_title}</div>
-                        <div style="color: #ccc; font-size: 0.85rem; margin-bottom: 5px;">Μάγειρας: ${req.cook_name}</div>
-                        <div style="margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-family: var(--font-heading); font-size: 1.05rem;">${sanitize(req.post_title)}</div>
                             <span class="status-badge status-${req.status}">${req.status}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: var(--space-md);">
+                            <span style="width: 20px; height: 20px; border-radius: 50%; background: var(--surface-elevated); display: inline-flex; align-items: center; justify-content: center; font-size: 0.6rem;">👨‍🍳</span>
+                            Μάγειρας: <strong>${sanitize(req.cook_name)}</strong>
                         </div>
                     `;
 
                     if (req.status === 'received') {
                         card.innerHTML += `
-                            <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
-                                <select class="rating-select releaf-input" style="padding: 5px; font-size: 0.8rem; width: auto; margin: 0;">
-                                    <option value="5">⭐⭐⭐⭐⭐</option>
-                                    <option value="4">⭐⭐⭐⭐</option>
-                                    <option value="3">⭐⭐⭐</option>
-                                    <option value="2">⭐⭐</option>
-                                    <option value="1">⭐</option>
-                                </select>
-                                <button class="rate-btn releaf-button" style="padding: 5px 10px; font-size: 0.8rem; margin: 0;">Αξιολόγηση</button>
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 10px; border-radius: var(--radius-sm); margin-top: auto;">
+                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px;">Αξιολόγησε τον μάγειρα:</div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <select class="releaf-input rating-select" style="padding: 6px 10px; font-size: 0.8rem; flex: 1;">
+                                        <option value="5">⭐⭐⭐⭐⭐ Τέλεια!</option>
+                                        <option value="4">⭐⭐⭐⭐ Πολύ καλά</option>
+                                        <option value="3">⭐⭐⭐ Μέτρια</option>
+                                        <option value="2">⭐⭐ Κακούτσικα</option>
+                                        <option value="1">⭐ Πολύ κακά</option>
+                                    </select>
+                                    <button class="releaf-button rate-btn" style="padding: 6px 14px; font-size: 0.8rem; white-space: nowrap;">Βαθμολογία</button>
+                                </div>
                             </div>
                         `;
                         card.querySelector('.rate-btn').onclick = () => handleRating(req.id, req.cook_id, card.querySelector('.rating-select').value);

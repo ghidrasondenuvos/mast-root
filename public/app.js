@@ -30,9 +30,9 @@ let notifInterval = null;
 export function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    const icons = { success: '', error: '', info: 'ℹ' };
+    const icons = { success: '✓', error: '✕', info: 'ℹ' };
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<span style="font-size:1.2rem;font-weight:bold">${icons[type] || 'ℹ'}</span> <span>${message}</span>`;
+    toast.innerHTML = `<span style="font-size:1.1rem;font-weight:bold">${icons[type] || 'ℹ'}</span> <span>${message}</span>`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }, 3500);
 }
@@ -43,26 +43,22 @@ export function fetchNotificationCount() {
         .then(res => res.json())
         .then(data => {
             state.notificationCount = data.count || 0;
-            // Update badge in DOM without full re-render
             const badge = document.getElementById('notif-badge-count');
             const bellBtn = document.getElementById('notif-bell-btn');
             if (bellBtn) {
                 const existingBadge = bellBtn.querySelector('.notification-badge');
                 if (state.notificationCount > 0) {
-                    if (existingBadge) {
-                        existingBadge.textContent = state.notificationCount;
-                    } else {
+                    if (existingBadge) existingBadge.textContent = state.notificationCount;
+                    else {
                         const span = document.createElement('span');
                         span.className = 'notification-badge';
                         span.textContent = state.notificationCount;
                         bellBtn.appendChild(span);
                     }
-                } else if (existingBadge) {
-                    existingBadge.remove();
-                }
+                } else if (existingBadge) existingBadge.remove();
             }
         })
-        .catch(e => console.error('Notification count error:', e));
+        .catch(() => {});
 }
 
 export function navigate(view) {
@@ -74,88 +70,94 @@ export function navigate(view) {
 export function setLoggedInUser(user) {
     state.loggedInUser = user;
     if (user) {
-        // Fetch updated user data (credits etc)
         fetch(`/api/users/${user.id}`)
             .then(res => res.json())
             .then(data => {
                 state.loggedInUser = data;
-                // Start notification polling
                 fetchNotificationCount();
                 if (notifInterval) clearInterval(notifInterval);
                 notifInterval = setInterval(fetchNotificationCount, 30000);
                 renderApp();
             })
-            .catch(e => console.error(e));
+            .catch(() => {});
     } else {
-        // Clear notification polling on logout
         state.notificationCount = 0;
         if (notifInterval) { clearInterval(notifInterval); notifInterval = null; }
         renderApp();
     }
 }
 
+// ==========================================
+// RENDER APP
+// ==========================================
 export function renderApp() {
     const root = document.getElementById('root');
     const bgImage = document.getElementById('bg-image');
-    root.innerHTML = ''; 
+    root.innerHTML = '';
 
-    let blurLevel = 15; 
-    let tint = 'rgba(0, 0, 0, 0.2)';
-
+    // Background blur
+    let blurLevel = 12;
+    let tint = 'rgba(0, 0, 0, 0.6)';
     if (['register', 'login', 'create_post'].includes(state.currentView)) {
-        blurLevel = 5; 
-        tint = 'rgba(0, 0, 0, 0.75)'; 
+        blurLevel = 6; tint = 'rgba(0, 0, 0, 0.7)';
     } else if (['dashboard', 'feed', 'admin', 'db', 'profile', 'credit_history', 'notifications', 'buy_credits'].includes(state.currentView)) {
-        blurLevel = 10;
-        tint = 'rgba(0, 0, 0, 0.85)'; 
+        blurLevel = 14; tint = 'rgba(15, 23, 42, 0.88)';
     }
     bgImage.style.filter = `blur(${blurLevel}px)`;
     bgImage.style.backgroundColor = tint;
 
-    // Topbar
-    if (['home', 'dashboard', 'feed', 'admin', 'profile', 'credit_history', 'notifications', 'buy_credits'].includes(state.currentView)) {
-        const topbar = document.createElement('div');
+    // ─── Topbar ───
+    const showTopbar = ['home', 'dashboard', 'feed', 'admin', 'profile', 'credit_history', 'notifications', 'buy_credits', 'create_post'].includes(state.currentView);
+    if (showTopbar) {
+        const topbar = document.createElement('nav');
         topbar.className = 'glass-panel';
-        topbar.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; box-sizing: border-box; position: relative; z-index: 10; border-radius: 0; border-top: none; border-left: none; border-right: none;";
-        
-        topbar.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <button id="hamburger-menu-btn" style="background: transparent; border: none; color: white; font-size: 2rem; cursor: pointer; padding: 0;">&#9776;</button>
-                <div id="logo-click" style="font-family: var(--font-heading); font-size: 1.8rem; color: #FFC72C; font-weight: bold; cursor: pointer; -webkit-text-stroke: 1px #DA291C;; text-shadow: 0px 2px 5px rgba(0,0,0,0.5);">UniBite</div>
-            </div>
+        topbar.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:12px 28px; border-radius:0; border-top:none; border-left:none; border-right:none; position:sticky; top:0; z-index:100;';
 
-            <div style="display: flex; gap: 20px; align-items: center;">
+        topbar.innerHTML = `
+            <div style="display:flex; align-items:center; gap:16px;">
+                <button id="hamburger-btn" style="background:none; border:none; color:var(--text-secondary); font-size:1.5rem; cursor:pointer; padding:6px; border-radius:var(--radius-sm); transition:all var(--transition-fast);"
+                    onmouseenter="this.style.color='var(--text-primary)'; this.style.background='rgba(255,255,255,0.05)'"
+                    onmouseleave="this.style.color='var(--text-secondary)'; this.style.background='none'">☰</button>
+                <div id="logo-click" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:1.6rem;">🍲</span>
+                    <span style="font-family:var(--font-heading); font-size:1.4rem; font-weight:800; background:linear-gradient(135deg, var(--accent), #FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">UniBite</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
                 ${!state.loggedInUser ? `
-                    <button id="nav-register-btn" class="releaf-button" style="background: #DA291C; color: #fff; font-weight: bold; margin: 0; padding: 12px 26px; font-size: 1.1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(218,41,28,0.4);" title="Έλα στην παρέα μας!">εγγραφή</button>
-                    <button id="nav-login-btn" class="releaf-button" style="margin: 0; padding: 12px 26px; font-size: 1.1rem; border-radius: 12px;" title="Πάλι πεινάς;">σύνδεση</button>
+                    <button id="nav-login-btn" class="releaf-button secondary" style="padding:8px 20px; font-size:0.85rem;">Σύνδεση</button>
+                    <button id="nav-register-btn" class="releaf-button" style="padding:8px 20px; font-size:0.85rem;">Εγγραφή</button>
                 ` : `
-                    <div id="topbar-clock" style="color: #fff; font-family: var(--font-mono); font-size: 1.1rem; padding: 5px 10px; background: rgba(0,0,0,0.3); border-radius: 8px;">
-                        --:--
-                    </div>
-                    <div style="color: #DA291C; font-family: var(--font-mono); font-weight: bold; font-size: 1.1rem; border: 1px solid #DA291C; padding: 5px 10px; border-radius: 8px;">
-                         ${state.loggedInUser.credits} Credits
+                    <div style="font-family:var(--font-mono); font-size:0.85rem; color:var(--accent); font-weight:600; padding:6px 14px; border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-full); background:rgba(245,158,11,0.08);">
+                        ${state.loggedInUser.credits} credits
                     </div>
                     <div class="notification-bell" id="notif-bell-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DA291C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top: 4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                         ${state.notificationCount > 0 ? `<span class="notification-badge">${state.notificationCount}</span>` : ''}
                     </div>
-                    <div style="position: relative;">
-                        <div id="avatar-btn" style="width: 45px; height: 45px; border-radius: 50%; background: var(--accent-color); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: bold; color: white; cursor: pointer; border: 2px solid rgba(255,255,255,0.2);">
-                            ${state.loggedInUser.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div id="avatar-dropdown" style="display: none; position: absolute; right: 0; top: 55px; background: rgba(27,24,27,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; min-width: 220px; flex-direction: column; gap: 5px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
-                            <button id="drop-edit-profile" class="filter-btn" style="width: 100%; text-align: left; padding: 12px; font-size: 1.05rem;">️ Επεξεργασία Προφίλ</button>
-                            <button id="drop-logout" class="filter-btn" style="width: 100%; text-align: left; padding: 12px; font-size: 1.05rem; color: #ff4d4d;"> Αποσύνδεση</button>
-                            <button id="drop-switch-user" class="filter-btn" style="width: 100%; text-align: left; padding: 12px; font-size: 1.05rem; color: #aaa;"> Αλλαγή Λογαριασμού</button>
+                    <div style="position:relative;">
+                        <div id="avatar-btn" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, var(--accent), var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:700; color:#fff; cursor:pointer; transition:all var(--transition-base); box-shadow:0 2px 8px rgba(0,0,0,0.2);"
+                            onmouseenter="this.style.transform='scale(1.08)'"
+                            onmouseleave="this.style.transform='scale(1)'">${sanitize(state.loggedInUser.username.charAt(0).toUpperCase())}</div>
+                        <div id="avatar-dropdown" style="display:none; position:absolute; right:0; top:48px; background:var(--surface-elevated); border:1px solid var(--border); border-radius:var(--radius-md); padding:8px; min-width:200px; flex-direction:column; gap:2px; box-shadow:var(--shadow-lg); z-index:999;">
+                            <div style="padding:10px 12px; border-bottom:1px solid var(--border); margin-bottom:4px;">
+                                <div style="font-family:var(--font-heading); font-weight:700; font-size:0.9rem;">${sanitize(state.loggedInUser.username)}</div>
+                                <div style="font-size:0.75rem; color:var(--text-tertiary); font-family:var(--font-mono);">${sanitize(state.loggedInUser.email)}</div>
+                            </div>
+                            <button id="drop-profile" class="filter-btn" style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); border:none;">Προφίλ</button>
+                            <button id="drop-credits" class="filter-btn" style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); border:none;">Ιστορικό Credits</button>
+                            <button id="drop-buy" class="filter-btn" style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); border:none;">Αγορά Credits</button>
+                            <hr style="border:none; border-top:1px solid var(--border); margin:4px 0;">
+                            <button id="drop-logout" class="filter-btn" style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); border:none; color:var(--danger);">Αποσύνδεση</button>
                         </div>
                     </div>
                 `}
             </div>
         `;
 
-        topbar.querySelector('#hamburger-menu-btn').onclick = () => { state.isSidebarOpen = true; renderApp(); };
+        topbar.querySelector('#hamburger-btn').onclick = () => { state.isSidebarOpen = true; renderApp(); };
         topbar.querySelector('#logo-click').onclick = () => navigate(state.loggedInUser ? 'dashboard' : 'home');
-        
+
         if (!state.loggedInUser) {
             topbar.querySelector('#nav-register-btn').onclick = () => navigate('register');
             topbar.querySelector('#nav-login-btn').onclick = () => navigate('login');
@@ -163,140 +165,183 @@ export function renderApp() {
             const avatarBtn = topbar.querySelector('#avatar-btn');
             const dropdown = topbar.querySelector('#avatar-dropdown');
             avatarBtn.onclick = () => { dropdown.style.display = dropdown.style.display === 'none' ? 'flex' : 'none'; };
-            
-            topbar.querySelector('#drop-edit-profile').onclick = () => navigate('profile');
+            topbar.querySelector('#drop-profile').onclick = () => navigate('profile');
+            topbar.querySelector('#drop-credits').onclick = () => navigate('credit_history');
+            topbar.querySelector('#drop-buy').onclick = () => navigate('buy_credits');
             topbar.querySelector('#drop-logout').onclick = async () => { await fetch('/logout', { method: 'POST' }); setLoggedInUser(null); navigate('home'); };
-            topbar.querySelector('#drop-switch-user').onclick = () => { setLoggedInUser(null); navigate('login'); };
-
             const bellBtn = topbar.querySelector('#notif-bell-btn');
             if (bellBtn) bellBtn.onclick = () => navigate('notifications');
+
+            // Close dropdown on click outside
+            document.addEventListener('click', (e) => {
+                if (dropdown && !avatarBtn.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
+            }, { once: true });
         }
         root.appendChild(topbar);
-
-        if (state.loggedInUser) {
-            const clockEl = document.getElementById('topbar-clock');
-            if (clockEl) {
-                const updateClock = () => {
-                    const now = new Date();
-                    clockEl.textContent = now.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                };
-                updateClock();
-                if (window.clockInterval) clearInterval(window.clockInterval);
-                window.clockInterval = setInterval(updateClock, 1000);
-            }
-        }
     }
 
-    const mainContent = document.createElement('div');
-    mainContent.style.cssText = "flex: 1; display: flex; align-items: center; justify-content: center; width: 100%;";
+    // ─── Main Content ───
+    const main = document.createElement('main');
+    main.style.cssText = 'flex:1; display:flex; align-items:center; justify-content:center; width:100%; padding:20px;';
 
     if (state.currentView === 'home' && !state.loggedInUser) {
-        mainContent.innerHTML = `
-            <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8%; padding: 0 50px; margin-top: -5vh; width: 100%;">
-                <div style="display: flex; flex-direction: column; align-items: flex-start; max-width: 500px;">
-                    <div style="font-size: 5rem; margin-bottom: 20px; filter: drop-shadow(0 0 20px rgba(166,124,82,0.5));"></div>
-                    <h1 style="font-family: var(--font-heading); color: #FFC72C; font-size: 4rem; -webkit-text-stroke: 2px #DA291C;; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">UniBite</h1>
-                    <p style="font-family: var(--font-mono); font-size: 1.1rem; color: #ddd; margin-bottom: 30px; line-height: 1.8; text-align: left; background: rgba(0,0,0,0.4); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
-                        Καλώς ήρθες στο δίκτυο φοιτητικής αλληλεγγύης και food-sharing!<br><br>
-                        Μαγείρεψες παραπάνω φαγητό; Μην το πετάς! Μοιράσου τις μερίδες που περισσεύουν με τους συμφοιτητές σου στις εστίες ή στη σχολή. 
-                        Κάθε φορά που προσφέρεις, κερδίζεις <strong>credits</strong> τα οποία μπορείς να χρησιμοποιήσεις για να δεσμεύσεις ένα ζεστό, σπιτικό γεύμα που μαγείρεψε κάποιος άλλος.<br><br>
-                        Μείωσε τη σπατάλη φαγητού, γνώρισε νέα άτομα και φάε καλύτερα!
+        main.style.alignItems = 'center';
+        main.innerHTML = `
+            <div style="display:flex; align-items:center; justify-content:center; gap:80px; max-width:1100px; width:100%; padding:0 40px; animation:fadeInUp 0.7s cubic-bezier(0.16,1,0.3,1);">
+                <div style="flex:1; max-width:520px;">
+                    <div style="display:inline-block; padding:6px 16px; border-radius:var(--radius-full); background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); font-family:var(--font-mono); font-size:0.78rem; color:var(--accent); margin-bottom:20px; font-weight:500;">🎓 Αποκλειστικά για φοιτητές</div>
+                    <h1 style="font-family:var(--font-heading); font-size:3.5rem; font-weight:800; line-height:1.1; margin-bottom:20px; color:var(--text-primary);">
+                        Μοιράσου το<br><span style="background:linear-gradient(135deg, var(--accent), #FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">σπιτικό φαγητό</span> σου.
+                    </h1>
+                    <p style="font-size:1.05rem; color:var(--text-secondary); line-height:1.7; margin-bottom:32px; max-width:440px;">
+                        Μαγείρεψες παραπάνω; Μην το πετάς! Μοιράσου τις μερίδες σου με συμφοιτητές, κέρδισε <strong style="color:var(--accent)">credits</strong> και δοκίμασε εσύ το φαγητό τους την επόμενη φορά.
                     </p>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <button id="cta-register" class="releaf-button" style="padding:14px 32px; font-size:1rem;">Ξεκίνα Δωρεάν →</button>
+                        <button id="cta-login" class="releaf-button secondary" style="padding:14px 32px; font-size:1rem;">Σύνδεση</button>
+                    </div>
+                    <div style="display:flex; gap:32px; margin-top:40px; padding-top:24px; border-top:1px solid var(--border);">
+                        <div><span style="font-family:var(--font-heading); font-weight:800; font-size:1.5rem; color:var(--accent);">5</span><span style="color:#fff; font-size:0.8rem; margin-left:6px;">δωρεάν credits</span></div>
+                        <div><span style="font-family:var(--font-heading); font-weight:800; font-size:1.5rem; color:var(--success);">48h</span><span style="color:#fff; font-size:0.8rem; margin-left:6px;">ζωντανές αγγελίες</span></div>
+                        <div><span style="font-family:var(--font-heading); font-weight:800; font-size:1.5rem; color:var(--secondary);">★ 5</span><span style="color:#fff; font-size:0.8rem; margin-left:6px;">σύστημα αξιολόγησης</span></div>
+                    </div>
                 </div>
-                <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <button id="start-cta-btn" class="releaf-button" style="font-size: 2.5rem; padding: 25px 60px; background: #FFC72C; color: #DA291C; border-radius: 20px; font-weight: bold; box-shadow: 0 15px 50px rgba(255, 199, 44, 0.6); border: 4px solid #DA291C; margin: 0; cursor: pointer; text-transform: uppercase; -webkit-text-stroke: 1px #DA291C;">
-                        Καλή όρεξη!
-                    </button>
+                <div style="flex:0 0 auto; display:flex; flex-direction:column; gap:16px; animation:float 4s ease-in-out infinite;">
+                    <div class="glass-panel" style="padding:20px 24px; width:280px;">
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                            <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #F59E0B, #F97316); display:flex; align-items:center; justify-content:center; font-size:0.9rem;">🍝</div>
+                            <div><div style="font-family:var(--font-heading); font-weight:700; font-size:0.9rem;">Μακαρονάδα Ναπολιτάνα</div><div style="font-size:0.7rem; color:var(--text-tertiary);">από Μαρία Κ.</div></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--success);">3 μερίδες</span>
+                            <span class="status-badge status-approved" style="font-size:0.65rem;">ΔΙΑΘΕΣΙΜΟ</span>
+                        </div>
+                    </div>
+                    <div class="glass-panel" style="padding:20px 24px; width:280px; margin-left:40px; opacity:0.85;">
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                            <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #6366F1, #8B5CF6); display:flex; align-items:center; justify-content:center; font-size:0.9rem;">🥗</div>
+                            <div><div style="font-family:var(--font-heading); font-weight:700; font-size:0.9rem;">Caesar Salad</div><div style="font-size:0.7rem; color:var(--text-tertiary);">από Γιώργο Π.</div></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--accent);">1 μερίδα</span>
+                            <span class="status-badge status-pending" style="font-size:0.65rem;">ΣΧΕΔΟΝ ΤΕΛΟΣ</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
-        mainContent.querySelector('#start-cta-btn').onclick = () => navigate('register');
-        root.appendChild(mainContent);
-    } 
-    else {
-        if (state.currentView === 'register') mainContent.appendChild(renderRegistrationForm(() => navigate('home')));
-        if (state.currentView === 'login') mainContent.appendChild(renderLoginForm(() => navigate('home'), (u) => { setLoggedInUser(u); navigate('dashboard'); }));
-        
+        main.querySelector('#cta-register').onclick = () => navigate('register');
+        main.querySelector('#cta-login').onclick = () => navigate('login');
+        root.appendChild(main);
+    } else {
+        main.style.alignItems = 'flex-start';
+        main.style.padding = '20px';
+
+        if (state.currentView === 'register') main.appendChild(renderRegistrationForm(navigate));
+        if (state.currentView === 'login') main.appendChild(renderLoginForm(navigate, (u) => { setLoggedInUser(u); navigate('dashboard'); }));
+
         if (state.loggedInUser) {
-            if (state.currentView === 'dashboard') mainContent.appendChild(renderDashboard(navigate, state));
-            if (state.currentView === 'feed') mainContent.appendChild(renderFeed(navigate, state));
-            if (state.currentView === 'create_post') mainContent.appendChild(renderCreatePost(navigate, state));
-            if (state.currentView === 'admin' && state.loggedInUser.role === 'admin') mainContent.appendChild(renderAdminDashboard(navigate, state));
-            if (state.currentView === 'profile') mainContent.appendChild(renderUserProfile(navigate, state));
-            if (state.currentView === 'credit_history') mainContent.appendChild(renderCreditHistory(navigate, state));
-            if (state.currentView === 'notifications') mainContent.appendChild(renderNotifications(navigate, state));
-            if (state.currentView === 'buy_credits') mainContent.appendChild(renderBuyCredits(navigate, state));
+            if (state.currentView === 'dashboard') main.appendChild(renderDashboard(navigate, state));
+            if (state.currentView === 'feed') main.appendChild(renderFeed(navigate, state));
+            if (state.currentView === 'create_post') main.appendChild(renderCreatePost(navigate, state));
+            if (state.currentView === 'admin' && state.loggedInUser.role === 'admin') main.appendChild(renderAdminDashboard(navigate, state));
+            if (state.currentView === 'profile') main.appendChild(renderUserProfile(navigate, state));
+            if (state.currentView === 'credit_history') main.appendChild(renderCreditHistory(navigate, state));
+            if (state.currentView === 'notifications') main.appendChild(renderNotifications(navigate, state));
+            if (state.currentView === 'buy_credits') main.appendChild(renderBuyCredits(navigate, state));
         }
-        
-        if (state.currentView === 'db') mainContent.appendChild(renderDatabaseViewer(() => navigate(state.loggedInUser ? 'feed' : 'home')));
-        
-        root.appendChild(mainContent);
+
+        if (state.currentView === 'db') main.appendChild(renderDatabaseViewer(() => navigate(state.loggedInUser ? 'dashboard' : 'home')));
+
+        root.appendChild(main);
     }
 
-    // Floating DB Admin button
+    // Floating DB Admin button (dev tool)
     const dbBtn = document.createElement('button');
-    dbBtn.style.cssText = "position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.5); color: #aaa; border: 1px solid #555; padding: 5px 10px; border-radius: 5px; font-family: var(--font-mono); font-size: 0.8rem; cursor: pointer; z-index: 100;";
-    dbBtn.textContent = "️ db admin";
+    dbBtn.style.cssText = 'position:fixed; bottom:16px; left:16px; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); color:var(--text-tertiary); border:1px solid var(--border); padding:6px 12px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:0.7rem; cursor:pointer; z-index:100; transition:all var(--transition-fast);';
+    dbBtn.textContent = '🛠 DB';
+    dbBtn.onmouseenter = () => { dbBtn.style.color = 'var(--text-primary)'; dbBtn.style.borderColor = 'var(--accent)'; };
+    dbBtn.onmouseleave = () => { dbBtn.style.color = 'var(--text-tertiary)'; dbBtn.style.borderColor = 'var(--border)'; };
     dbBtn.onclick = () => navigate('db');
-    document.getElementById('root').appendChild(dbBtn);
+    root.appendChild(dbBtn);
 
     renderSidebar();
 }
 
+// ==========================================
+// SIDEBAR
+// ==========================================
 function renderSidebar() {
     if (!state.isSidebarOpen) return;
-    
+
     const overlay = document.createElement('div');
-    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 998;";
+    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:998; animation:fadeIn 0.2s ease;';
     overlay.onclick = () => { state.isSidebarOpen = false; renderApp(); };
     document.getElementById('root').appendChild(overlay);
 
-    const sidebar = document.createElement('div');
+    const sidebar = document.createElement('aside');
     sidebar.className = 'glass-panel';
-    sidebar.style.cssText = `position: fixed; top: 0; left: 0; width: 260px; height: 100vh; transition: left 0.3s ease-in-out; z-index: 1000; padding: 30px; box-sizing: border-box; border-radius: 0; border-top: none; border-left: none; border-bottom: none;`;
+    sidebar.style.cssText = 'position:fixed; top:0; left:0; width:280px; height:100vh; z-index:1000; padding:28px; border-radius:0; border-top:none; border-left:none; border-bottom:none; display:flex; flex-direction:column; animation:slideInLeft 0.3s cubic-bezier(0.16,1,0.3,1);';
+
+    const menuItems = [];
+    if (!state.loggedInUser) {
+        menuItems.push({ icon: '🏠', label: 'Αρχική', view: 'home' });
+        menuItems.push({ icon: '🔑', label: 'Σύνδεση', view: 'login' });
+        menuItems.push({ icon: '📝', label: 'Εγγραφή', view: 'register' });
+    } else {
+        menuItems.push({ icon: '📊', label: 'Dashboard', view: 'dashboard' });
+        menuItems.push({ icon: '🌍', label: 'Feed Αγγελιών', view: 'feed', accent: true });
+        menuItems.push({ icon: '➕', label: 'Δώσε Φαγητό', view: 'create_post' });
+        menuItems.push({ icon: '👤', label: 'Το Προφίλ μου', view: 'profile' });
+        menuItems.push({ icon: '🔔', label: 'Ειδοποιήσεις', view: 'notifications' });
+        menuItems.push({ icon: '💳', label: 'Αγορά Credits', view: 'buy_credits' });
+        if (state.loggedInUser.role === 'admin') {
+            menuItems.push({ icon: '⚙️', label: 'Admin Panel', view: 'admin', danger: true });
+        }
+    }
 
     sidebar.innerHTML = `
-        <button id="close-sidebar-btn" style="position: absolute; top: 28px; left: 30px; background: transparent; border: none; font-size: 2rem; cursor: pointer; color: #fff; padding: 0; line-height: 1;">&#10006;</button>
-        <h3 style="font-family: var(--font-heading); font-size: 1.5rem; color: #DA291C; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-top: 60px;">ΜΕΝΟΥ (Απόκρυφες Επιλογές)</h3>
-        <ul style="list-style-type: none; padding: 0; font-family: var(--font-heading); font-size: 1.1rem; text-align: left;" id="sidebar-links-list"></ul>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:1.4rem;">🍲</span>
+                <span style="font-family:var(--font-heading); font-size:1.2rem; font-weight:800; color:var(--accent);">UniBite</span>
+            </div>
+            <button id="close-sidebar" style="background:none; border:none; color:var(--text-tertiary); font-size:1.3rem; cursor:pointer; padding:4px; border-radius:var(--radius-sm);" 
+                onmouseenter="this.style.color='var(--text-primary)'" onmouseleave="this.style.color='var(--text-tertiary)'">&times;</button>
+        </div>
+        ${state.loggedInUser ? `
+            <div style="padding:14px; border-radius:var(--radius-md); background:var(--surface-card); border:1px solid var(--border); margin-bottom:24px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, var(--accent), var(--secondary)); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:0.85rem;">${sanitize(state.loggedInUser.username.charAt(0).toUpperCase())}</div>
+                    <div>
+                        <div style="font-family:var(--font-heading); font-weight:700; font-size:0.85rem;">${sanitize(state.loggedInUser.username)}</div>
+                        <div style="font-family:var(--font-mono); font-size:0.7rem; color:var(--accent);">${state.loggedInUser.credits} credits</div>
+                    </div>
+                </div>
+            </div>
+        ` : ''}
+        <nav id="sidebar-nav" style="display:flex; flex-direction:column; gap:4px; flex:1;" class="stagger"></nav>
+        ${state.loggedInUser ? `<button id="sidebar-logout" style="margin-top:auto; padding:12px; border-radius:var(--radius-md); background:none; border:1px solid var(--border); color:var(--text-tertiary); font-family:var(--font-main); font-size:0.85rem; cursor:pointer; transition:all var(--transition-fast); text-align:left;"
+            onmouseenter="this.style.borderColor='var(--danger)'; this.style.color='var(--danger)'"
+            onmouseleave="this.style.borderColor='var(--border)'; this.style.color='var(--text-tertiary)'">← Αποσύνδεση</button>` : ''}
     `;
 
-    sidebar.querySelector('#close-sidebar-btn').onclick = () => { state.isSidebarOpen = false; renderApp(); };
-    const list = sidebar.querySelector('#sidebar-links-list');
+    sidebar.querySelector('#close-sidebar').onclick = () => { state.isSidebarOpen = false; renderApp(); };
 
-    if (!state.loggedInUser) {
-        list.innerHTML = `
-            <li id="side-link-home" style="margin: 20px 0; cursor: pointer; color: #fff;" title="Εδώ που άρχισαν όλα...">Αρχική (Το Σπίτι του Burger)</li>
-            <li id="side-link-login" style="margin: 20px 0; cursor: pointer; color: #fff;" title="Ξέχασες τον κωδικό σου πάλι;">Σύνδεση (Σουσάμι άνοιξε)</li>
-        `;
-        list.querySelector('#side-link-home').onclick = () => navigate('home');
-        list.querySelector('#side-link-login').onclick = () => navigate('login');
-    } else {
-        list.innerHTML = `
-            <li id="side-link-feed" style="margin: 20px 0; cursor: pointer; color: #DA291C; font-weight: bold;" title="Η κοιλιά γουργουρίζει"> Feed (Ό,τι φάμε κι ό,τι πιούμε)</li>
-            <li id="side-link-cpost" style="margin: 20px 0; cursor: pointer; color: #fff;" title="Δώσε και σώσε"> Δώσε Φαγητό (Μην τσιγκουνεύεσαι)</li>
-            <li id="side-link-dash" style="margin: 20px 0; cursor: pointer; color: #fff;" title="Το κέντρο ελέγχου"> Το Dashboard μου (Εδώ είσαι το Αφεντικό)</li>
-            <li id="side-link-profile" style="margin: 20px 0; cursor: pointer; color: #fff;" title="Είσαι κούκλος/α"> Προφίλ (Καθρέφτη, καθρεφτάκι μου)</li>
-            <li id="side-link-buy" style="margin: 20px 0; cursor: pointer; color: #DA291C;" title="Δώσε πόνο"> Αγορά Credits (Shut up and take my money)</li>
-        `;
-        
-        if (state.loggedInUser.role === 'admin') {
-            list.innerHTML += `<li id="side-link-admin" style="margin: 20px 0; cursor: pointer; color: #ff4d4d; font-weight: bold;" title="Εξουσία!"> Admin Panel (Μόνο για θεούς)</li>`;
-        }
+    const nav = sidebar.querySelector('#sidebar-nav');
+    menuItems.forEach(item => {
+        const btn = document.createElement('button');
+        const isActive = state.currentView === item.view;
+        btn.style.cssText = `display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:var(--radius-sm); background:${isActive ? 'rgba(245,158,11,0.1)' : 'none'}; border:none; color:${item.danger ? 'var(--danger)' : item.accent ? 'var(--accent)' : isActive ? 'var(--accent)' : 'var(--text-secondary)'}; font-family:var(--font-main); font-size:0.88rem; font-weight:${isActive ? '600' : '500'}; cursor:pointer; transition:all var(--transition-fast); text-align:left; width:100%;`;
+        btn.innerHTML = `<span style="font-size:1.1rem; width:24px; text-align:center;">${item.icon}</span> ${item.label}`;
+        btn.onmouseenter = () => { if (!isActive) btn.style.background = 'rgba(255,255,255,0.04)'; };
+        btn.onmouseleave = () => { if (!isActive) btn.style.background = 'none'; };
+        btn.onclick = () => navigate(item.view);
+        nav.appendChild(btn);
+    });
 
-        list.innerHTML += `<li id="side-link-logout" style="margin: 20px 0; margin-top: 40px; cursor: pointer; color: #aaa;" title="Έξοδος με ελαφρά πηδηματάκια">Αποσύνδεση (Πας να φας μόνος σου;)</li>`;
-
-        list.querySelector('#side-link-feed').onclick = () => navigate('feed');
-        list.querySelector('#side-link-cpost').onclick = () => navigate('create_post');
-        list.querySelector('#side-link-dash').onclick = () => navigate('dashboard');
-        list.querySelector('#side-link-profile').onclick = () => navigate('profile');
-        list.querySelector('#side-link-buy').onclick = () => navigate('buy_credits');
-        
-        if (state.loggedInUser.role === 'admin') {
-            list.querySelector('#side-link-admin').onclick = () => navigate('admin');
-        }
-
-        list.querySelector('#side-link-logout').onclick = async () => {
+    if (state.loggedInUser) {
+        sidebar.querySelector('#sidebar-logout').onclick = async () => {
             await fetch('/logout', { method: 'POST' });
             state.loggedInUser = null;
             state.notificationCount = 0;
@@ -308,6 +353,8 @@ function renderSidebar() {
     document.getElementById('root').appendChild(sidebar);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderApp);
+} else {
     renderApp();
-});
+}
