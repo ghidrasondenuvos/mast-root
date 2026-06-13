@@ -2,7 +2,26 @@ const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
+const multer = require('multer');
 const pool = require('./config/db');
+
+// Multer config for image uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, path.join(__dirname, 'public', 'uploads')),
+    filename: (req, file, cb) => {
+        const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, unique + ext);
+    }
+});
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) cb(null, true);
+        else cb(new Error('Μόνο εικόνες επιτρέπονται.'), false);
+    }
+});
 
 const app = express();
 
@@ -204,13 +223,13 @@ app.get('/api/users/:id/stats', async (req, res) => {
         const [sharedRows] = await pool.execute(
             `SELECT COUNT(*) as total_portions_shared FROM requests r
              JOIN posts p ON r.post_id = p.id
-             WHERE p.cook_id = ? AND r.status = 'received'`,
+             WHERE p.cook_id = ? AND r.status = 'delivered'`,
             [userId]
         );
 
         const [receivedRows] = await pool.execute(
             `SELECT COUNT(*) as total_portions_received FROM requests
-             WHERE consumer_id = ? AND status = 'received'`,
+             WHERE consumer_id = ? AND status = 'delivered'`,
             [userId]
         );
 
@@ -540,12 +559,12 @@ app.post('/api/requests/:id/decision', async (req, res) => {
     }
 });
 
-// Cook marks as received OR no-show
+// Cook or Consumer marks as delivered OR no-show
 app.post('/api/requests/:id/completion', async (req, res) => {
     let conn;
     try {
         const request_id = req.params.id;
-        const { status } = req.body; // 'received' or 'no_show'
+        const { status } = req.body; // 'delivered' or 'no_show'
         conn = await pool.getConnection();
 
         await conn.beginTransaction();
@@ -566,9 +585,9 @@ app.post('/api/requests/:id/completion', async (req, res) => {
 
             // Notify consumer about no-show penalty
             await createNotification(conn, consumer_id, 'no_show', 'Δεν εμφανιστήκατε για παραλαβή. Αφαιρέθηκε 1 credit ως ποινή.', parseInt(request_id));
-        } else if (status === 'received') {
+        } else if (status === 'delivered') {
             // Notify consumer about successful receipt
-            await createNotification(conn, consumer_id, 'received', 'Η παραλαβή σας ολοκληρώθηκε! Καλή όρεξη!', parseInt(request_id));
+            await createNotification(conn, consumer_id, 'delivered', 'Η παραλαβή σας ολοκληρώθηκε! Καλή όρεξη!', parseInt(request_id));
         }
 
         await conn.commit();
@@ -587,14 +606,40 @@ app.post('/api/requests/:id/completion', async (req, res) => {
 // 5. REVIEWS & CREDITS
 // ==========================================
 
+// Get pending reviews for a user (delivered but not yet reviewed)
+app.get('/api/pending-reviews/:user_id', authenticate, async (req, res) => {
+    try {
+        const userId = req.params.user_id;
+        const [rows] = await pool.execute(`
+            SELECT r.id, r.post_id, p.title as post_title, p.cook_id, u.username as cook_name, r.consumer_id, c.username as consumer_name
+            FROM requests r
+            JOIN posts p ON r.post_id = p.id
+            JOIN users u ON p.cook_id = u.id
+            JOIN users c ON r.consumer_id = c.id
+            WHERE (r.consumer_id = ? OR p.cook_id = ?) AND r.status = 'delivered'
+            AND r.id NOT IN (SELECT request_id FROM reviews WHERE reviewer_id = ?)
+        `, [userId, userId, userId]);
+        res.json(rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ detail: 'Σφάλμα.' });
+    }
+});
+
+// Upload image endpoint
+app.post('/api/upload', authenticate, upload.single('image'), (req, res) => {
+    if (!req.file) return res.status(400).json({ detail: 'Δεν επιλέχτηκε αρχείο.' });
+    res.json({ url: '/uploads/' + req.file.filename });
+});
+
 app.post('/api/reviews', authenticate, async (req, res) => {
     let conn;
     try {
-        const { request_id, consumer_id, cook_id, rating } = req.body;
+        const { request_id, reviewer_id, consumer_id, cook_id, rating, comment } = req.body;
         conn = await pool.getConnection();
 
-        // Check for duplicate review
-        const [existingReview] = await conn.execute('SELECT id FROM reviews WHERE request_id = ?', [request_id]);
+        // Check for duplicate review by this reviewer
+        const [existingReview] = await conn.execute('SELECT id FROM reviews WHERE request_id = ? AND reviewer_id = ?', [request_id, reviewer_id]);
         if (existingReview.length > 0) {
             return res.status(400).json({ detail: 'Έχετε ήδη αξιολογήσει αυτή τη συναλλαγή.' });
         }
@@ -602,19 +647,21 @@ app.post('/api/reviews', authenticate, async (req, res) => {
         await conn.beginTransaction();
 
         await conn.execute(
-            'INSERT INTO reviews (request_id, consumer_id, cook_id, rating) VALUES (?, ?, ?, ?)',
-            [request_id, consumer_id, cook_id, rating]
+            'INSERT INTO reviews (request_id, reviewer_id, consumer_id, cook_id, rating, comment) VALUES (?, ?, ?, ?, ?, ?)',
+            [request_id, reviewer_id, consumer_id, cook_id, rating, comment || null]
         );
 
-        // Add credits to cook
-        const creditsEarned = rating > 3 ? 2 : 1;
-        await conn.execute('UPDATE users SET credits = credits + ? WHERE id = ?', [creditsEarned, cook_id]);
+        if (reviewer_id == consumer_id) {
+            // Add credits to cook
+            const creditsEarned = rating > 3 ? 2 : 1;
+            await conn.execute('UPDATE users SET credits = credits + ? WHERE id = ?', [creditsEarned, cook_id]);
 
-        // Log credit transaction for cook
-        await logCreditTransaction(conn, cook_id, creditsEarned, 'earned', `Κέρδος credits από αξιολόγηση (${rating}/5)`);
+            // Log credit transaction for cook
+            await logCreditTransaction(conn, cook_id, creditsEarned, 'earned', `Κέρδος credits από αξιολόγηση (${rating}/5)`);
 
-        // Notify cook about earned credits
-        await createNotification(conn, cook_id, 'credit_earned', `Κερδίσατε ${creditsEarned} credit(s) από αξιολόγηση!`, parseInt(request_id));
+            // Notify cook about earned credits
+            await createNotification(conn, cook_id, 'credit_earned', `Κερδίσατε ${creditsEarned} credit(s) από αξιολόγηση!`, parseInt(request_id));
+        }
 
         await conn.commit();
 
@@ -735,7 +782,7 @@ app.get('/api/admin/stats', authenticate, requireAdmin, async (req, res) => {
         // 1. Total received portions in the last 30 days
         const [received] = await pool.execute(`
             SELECT COUNT(*) as count FROM requests 
-            WHERE status = 'received' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            WHERE status = 'delivered' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         `);
 
         // 2. Top Donor Leaderboard
@@ -743,8 +790,8 @@ app.get('/api/admin/stats', authenticate, requireAdmin, async (req, res) => {
             SELECT u.username, COUNT(r.id) as portions_shared, AVG(rev.rating) as avg_rating
             FROM users u
             JOIN posts p ON u.id = p.cook_id
-            JOIN requests r ON p.id = r.post_id AND r.status = 'received'
-            LEFT JOIN reviews rev ON u.id = rev.cook_id
+            JOIN requests r ON p.id = r.post_id AND r.status = 'delivered'
+            LEFT JOIN reviews rev ON u.id = rev.cook_id AND rev.reviewer_id = r.consumer_id
             GROUP BY u.id
             ORDER BY portions_shared DESC
             LIMIT 10
@@ -799,6 +846,33 @@ app.put('/api/admin/users/:id/credits', authenticate, requireAdmin, async (req, 
     }
 });
 
+// Admin edit user details
+app.put('/api/admin/users/:id', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { username, email, role } = req.body;
+
+        // Failsafe: basic empty string validation
+        if (!username || !username.trim()) return res.status(400).json({ detail: 'Το όνομα χρήστη δεν μπορεί να είναι κενό.' });
+        if (!email || !email.trim()) return res.status(400).json({ detail: 'Το email δεν μπορεί να είναι κενό.' });
+        if (!role || !['student', 'admin'].includes(role)) return res.status(400).json({ detail: 'Μη έγκυρος ρόλος.' });
+
+        await pool.execute(
+            'UPDATE users SET username = ?, email = ?, role = ? WHERE id = ?',
+            [username.trim(), email.trim(), role, userId]
+        );
+
+        const [users] = await pool.execute('SELECT id, username, email, role, credits FROM users WHERE id = ?', [userId]);
+        res.json(users[0]);
+    } catch (error) {
+        console.error(error);
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ detail: 'Το username ή το email χρησιμοποιείται ήδη.' });
+        }
+        res.status(500).json({ detail: 'Σφάλμα ενημέρωσης χρήστη.' });
+    }
+});
+
 
 // ==========================================
 // 9. RAW DATABASE VIEWER (DEV)
@@ -831,6 +905,130 @@ app.get('/api/db-reviews', async (req, res) => {
         res.json(rows);
     } catch (e) { res.json([]); }
 });
+
+app.put('/api/db-edit/:table/:id', async (req, res) => {
+    // In a real app this should be heavily protected (e.g. authenticate, requireAdmin). 
+    // Since it's a generic DB editor for the project, we'll allow it based on the prompt.
+    try {
+        const table = req.params.table;
+        const id = req.params.id;
+        const updates = req.body;
+
+        // Failsafe: No empty values
+        for (const [key, value] of Object.entries(updates)) {
+            if (value === '' || value === null || value === undefined) {
+                return res.status(400).json({ detail: `Το πεδίο ${key} δεν μπορεί να είναι κενό.` });
+            }
+        }
+
+        const allowedTables = ['users', 'posts', 'requests', 'reviews'];
+        if (!allowedTables.includes(table)) {
+            return res.status(400).json({ detail: 'Μη επιτρεπτός πίνακας.' });
+        }
+
+        const fields = Object.keys(updates);
+        if (fields.length === 0) {
+            return res.status(400).json({ detail: 'Δεν δόθηκαν δεδομένα για ενημέρωση.' });
+        }
+
+        const setClause = fields.map(f => `${f} = ?`).join(', ');
+        const values = fields.map(f => updates[f]);
+        values.push(id);
+
+        await pool.execute(`UPDATE ${table} SET ${setClause} WHERE id = ?`, values);
+        
+        res.json({ status: 'success' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ detail: 'Σφάλμα κατά την ενημέρωση της βάσης.' });
+    }
+});
+
+app.put('/api/db-edit-batch/:table', async (req, res) => {
+    let conn;
+    try {
+        const table = req.params.table;
+        const rows = req.body; // Array of { id, ...updates }
+
+        if (!Array.isArray(rows)) {
+            return res.status(400).json({ detail: 'Τα δεδομένα πρέπει να είναι λίστα (array).' });
+        }
+
+        const allowedTables = ['users', 'posts', 'requests', 'reviews'];
+        if (!allowedTables.includes(table)) {
+            return res.status(400).json({ detail: 'Μη επιτρεπτός πίνακας.' });
+        }
+
+        // Failsafe: Validate all rows before starting transaction
+        for (const row of rows) {
+            const updates = { ...row };
+            delete updates.id;
+            for (const [key, value] of Object.entries(updates)) {
+                if (value === '' || value === null || value === undefined) {
+                    return res.status(400).json({ detail: `Σφάλμα στη γραμμή ID=${row.id}: Το πεδίο ${key} δεν μπορεί να είναι κενό.` });
+                }
+            }
+        }
+
+        conn = await pool.getConnection();
+        await conn.beginTransaction();
+
+        for (const row of rows) {
+            const id = row.id;
+            const updates = { ...row };
+            delete updates.id;
+
+            const fields = Object.keys(updates);
+            if (fields.length > 0) {
+                const setClause = fields.map(f => `${f} = ?`).join(', ');
+                const values = fields.map(f => updates[f]);
+                values.push(id);
+                await conn.execute(`UPDATE ${table} SET ${setClause} WHERE id = ?`, values);
+            }
+        }
+
+        await conn.commit();
+        res.json({ status: 'success' });
+    } catch (error) {
+        if (conn) try { await conn.rollback(); } catch(e) {}
+        console.error(error);
+        res.status(500).json({ detail: 'Σφάλμα κατά τη μαζική ενημέρωση της βάσης.' });
+    } finally {
+        if (conn) conn.release();
+    }
+});
+
+// ==========================================
+// BACKGROUND TASKS (CRON)
+// ==========================================
+setInterval(async () => {
+    try {
+        // 1. Mark posts older than 48h as deleted
+        await pool.execute("UPDATE posts SET status='deleted' WHERE status='active' AND TIMESTAMPDIFF(HOUR, created_at, NOW()) > 48");
+        
+        // 2. Penalize consumers for missing reviews after 48h
+        // We find requests that are 'received' and have no review after 48h
+        const [requests] = await pool.execute(`
+            SELECT id, consumer_id FROM requests 
+            WHERE status='received' 
+            AND id NOT IN (SELECT request_id FROM reviews) 
+            AND TIMESTAMPDIFF(HOUR, updated_at, NOW()) > 48
+        `);
+
+        for (const req of requests) {
+            // Deduct 1 credit
+            await pool.execute('UPDATE users SET credits = credits - 1 WHERE id = ?', [req.consumer_id]);
+            // Insert a mock review to prevent multiple deductions
+            await pool.execute('INSERT INTO reviews (request_id, consumer_id, cook_id, rating, comment) VALUES (?, ?, ?, ?, ?)', 
+                [req.id, req.consumer_id, req.consumer_id, 0, 'AUTO_PENALTY_NO_REVIEW']);
+            // Notify user
+            await pool.execute("INSERT INTO notifications (user_id, type, message, is_read) VALUES (?, ?, ?, false)", 
+                [req.consumer_id, 'penalty', 'Σου αφαιρέθηκε 1 credit λόγω μη αξιολόγησης γεύματος εντός 48 ωρών.']);
+        }
+    } catch (e) {
+        console.error('Background tasks error:', e);
+    }
+}, 60 * 60 * 1000); // Check every 1 hour
 
 // Εκκίνηση Server
 const PORT = 3000;

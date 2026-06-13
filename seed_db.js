@@ -57,14 +57,14 @@ async function seed() {
 
         console.log('Inserting requests and reviews...');
         
-        let [req1] = await conn.execute("INSERT INTO requests (post_id, consumer_id, status) VALUES (?, ?, 'received')", [postIds['Μουσακάς Παραδοσιακός'], userIds['giorgos']]);
-        await conn.execute("INSERT INTO reviews (request_id, consumer_id, cook_id, rating, comment) VALUES (?, ?, ?, 5, 'Απλά απίστευτος μουσακάς, σαν της μαμάς μου!')", [req1.insertId, userIds['giorgos'], userIds['maria']]);
+        let [req1] = await conn.execute("INSERT INTO requests (post_id, consumer_id, status) VALUES (?, ?, 'delivered')", [postIds['Μουσακάς Παραδοσιακός'], userIds['giorgos']]);
+        await conn.execute("INSERT INTO reviews (request_id, reviewer_id, consumer_id, cook_id, rating, comment) VALUES (?, ?, ?, ?, 5, 'Απλά απίστευτος μουσακάς, σαν της μαμάς μου!')", [req1.insertId, userIds['giorgos'], userIds['giorgos'], userIds['maria']]);
         await conn.execute("INSERT INTO credit_transactions (user_id, amount, type, description) VALUES (?, ?, 'spent', 'Αίτημα μερίδας: Μουσακάς')", [userIds['giorgos'], -1]);
         await conn.execute("INSERT INTO credit_transactions (user_id, amount, type, description) VALUES (?, ?, 'earned', 'Αξιολόγηση 5/5 για Μουσακά')", [userIds['maria'], 2]);
-        await conn.execute("INSERT INTO notifications (user_id, type, message) VALUES (?, 'received', 'Η παραλαβή ολοκληρώθηκε')", [userIds['giorgos']]);
+        await conn.execute("INSERT INTO notifications (user_id, type, message) VALUES (?, 'delivered', 'Η παραλαβή ολοκληρώθηκε')", [userIds['giorgos']]);
 
-        let [req2] = await conn.execute("INSERT INTO requests (post_id, consumer_id, status) VALUES (?, ?, 'received')", [postIds['Σουφλέ Ζυμαρικών'], userIds['eleni']]);
-        await conn.execute("INSERT INTO reviews (request_id, consumer_id, cook_id, rating, comment) VALUES (?, ?, ?, 4, 'Πολύ νόστιμο και ζεστό, ευχαριστώ!')", [req2.insertId, userIds['eleni'], userIds['giorgos']]);
+        let [req2] = await conn.execute("INSERT INTO requests (post_id, consumer_id, status) VALUES (?, ?, 'delivered')", [postIds['Σουφλέ Ζυμαρικών'], userIds['eleni']]);
+        await conn.execute("INSERT INTO reviews (request_id, reviewer_id, consumer_id, cook_id, rating, comment) VALUES (?, ?, ?, ?, 4, 'Πολύ νόστιμο και ζεστό, ευχαριστώ!')", [req2.insertId, userIds['eleni'], userIds['eleni'], userIds['giorgos']]);
         await conn.execute("INSERT INTO credit_transactions (user_id, amount, type, description) VALUES (?, ?, 'spent', 'Αίτημα μερίδας: Σουφλέ')", [userIds['eleni'], -1]);
         await conn.execute("INSERT INTO credit_transactions (user_id, amount, type, description) VALUES (?, ?, 'earned', 'Αξιολόγηση 4/5 για Σουφλέ')", [userIds['giorgos'], 2]);
 

@@ -1,0 +1,85 @@
+WEB PROGRAMMING AND SYSTEMS
+Laboratory Exercise Assignment 2025/26
+V1.0-30/3/2026
+
+OBJECTIVE
+Development of the "UniBite" Platform (Student Food Sharing)
+
+As part of your final project, you are required to develop "UniBite", an innovative online food-sharing platform designed exclusively for the university community. The objective of the application is to connect students who cook in their dormitories or homes and have leftover portions with fellow students looking for a home-cooked meal. The basic idea is that someone can cook a meal that typically requires a large quantity (e.g., a pot, baking pan), keep a portion for themselves, and share the rest with fellow students. For every portion they provide, they collect credits (points), which they can use to request portions of food offered by others. Thus, not everyone has to cook every day!
+
+The cook uploads the available quantity (portions), a photo (optional), free-text notes, and tags the listing for any known allergens (https://www.eufic.org/en/healthy-living/article/list-of-the-14-most-common-food-allergens). Additionally, they indicate the location from where someone can pick up the food (e.g., at their home or at the faculty) and the pickup hours.
+
+Through this project, you will be asked to practically apply all the Front-End technologies taught in the semester's lectures, creating a fully functional, dynamic, responsive, and interactive Web Application. The system architecture is based on the seamless interaction of different users, each with their own permissions and specific interfaces. The platform is not merely a notice board, but a comprehensive supply and demand management system. From creating the listing and defining the pickup location to the final rating of the dish and exporting statistics, the application must respond smoothly in real-time to user actions.
+
+The evaluation of your project will be based on two main pillars: the technical proficiency of using JavaScript (DOM Manipulation, data structure management, using the Fetch API for server communication) and the user experience (UI/UX). The design should be modern, aesthetically pleasing, and, most importantly, strictly Responsive, ensuring flawless display on both mobile phone screens and computers.
+
+FUNCTIONAL SPECIFICATIONS
+The requirements and specifications of the application are detailed below:
+
+A. User Categories (Roles)
+
+A1. Student - Cook (Provider): The user who undertakes to create the listing for the food they offer and manage its delivery.
+
+A2. Student - Consumer (Receiver): The user who browses the available options, requests portions, and rates the meals.
+
+A3. Administrator (Admin): The person in charge of the platform who oversees its smooth operation and has access to overall usage statistics.
+
+B. Student - Cook Functions
+
+B1. Listing Management (CRUD): The cook must be able to create (Create), edit in case of a mistake (Edit), and delete (Delete) their listings. The description includes a title, a photo (optional), free-text notes, and a list of known allergens. Every listing must be automatically marked as deleted upon the expiration of 48 hours from its announcement and will not be displayed to users.
+
+B2. Delivery Details: Upon creating the listing, it is mandatory to explicitly state the delivery point (e.g., Specific university building, dorm room number) as well as the exact pickup time.
+
+B3. Request Management: The cook will have a dedicated interface (dashboard) where they will receive requests from fellow students and will have the ability to accept (Approve) or reject (Reject) them. Acceptance must automatically reduce the available portions. Upon pickup of a portion, the cook marks it as successfully received. If someone reserves a portion and does not pick it up, the cook indicates this in the system, and the points of the person who failed to pick it up are reduced by 1.
+
+B4. Points Display: The cook sees how many points they have accumulated by providing portions to others. Points are increased by 1 based on the rating given by each participant, provided it exceeds 3/5. Example: 1 portion rated 2/5: 1 point. 1 portion rated 4/5: 2 points.
+
+C. Student - Consumer Functions
+
+C1. Dynamic Feed: Display of all active listings in a list format and on a map. Listings that are sold out (0 portions) should be visually highlighted (e.g., grayed out or with a different icon). The offered portions are displayed on a map based on the pickup location. The user can filter the map and sort the listing based on distance from a given location, restricting the number of results.
+
+C2. Sending a Request: Ability to reserve a portion with the click of a button, which will send the corresponding request to the cook. The user must have enough points to reserve a portion (at least 1). New users are given 5 points so they can start using the system - subsequently, they must also offer food themselves to be able to earn more points.
+
+C3. Rating System (Ratings): After successfully picking up the food, the consumer will be able to leave a rating (e.g., a 1-5 star scale) for the portion they tried. If someone does not leave a rating within 48 hours of picking up a portion, one point is deducted from their balance.
+
+D. Administrator Functions (Admin Dashboard)
+
+D1. Overall Statistics: A dedicated screen accessible only by the Admin, which will calculate and display the total number of portions successfully shared in the last month.
+
+D2. User Ranking (Leaderboard): Display of the "Top Donor" student, i.e., the one who offered the most portions to the community, along with the statistics of the highest-rated meals.
+
+NOTE regarding the listings:
+The listings can be in one of the following states:
+
+Active: Listings for which 48 hours have not elapsed since their creation and which have available portions. These appear in the listing list / map.
+
+Inactive: Listings for which 48 hours have not elapsed since their creation and which have no available portions. These appear in the listing list / map with appropriate highlighting (e.g., grayed out).
+
+Deleted: Listings for which 48 hours have elapsed since their creation. These do not appear in the listing list / map but remain in the DB for the purpose of exporting statistics.
+
+E. Technical Implementation Requirements
+
+E1. DOM & Events: Smooth updating of the page (adding/removing food cards) without a page reload, utilizing JavaScript Events (e.g., addEventListener, e.preventDefault()).
+
+E2. Client-Server Communication: Utilization of the fetch() API and JSON for sending and receiving data (Listings, Requests, Ratings).
+
+E3. Appearance & Responsive Design: Evaluation of the interface's usability (UI) and its adaptability to different device resolutions (Mobile, Tablet, Desktop) via CSS (e.g., Flexbox, Grid, Media Queries).
+
+CONSTRAINTS
+
+Groups of 3 (three) people at most.
+
+The core of your deliverable must compulsorily be implemented using technologies taught in the course (PHP, JavaScript, Node.JS, HTML).
+
+The appearance and functionality of the application are evaluated.
+
+DELIVERABLES
+
+A concise report that will include:
+a. The database design (Entity-Relationship Diagram for relational databases,
+b. description of the basic data model for non-relational databases).
+c. Presentation of the application with a series of Screenshots. You may present them in the order the application specifications are described in the assignment, or by following your own application demonstration scenario. For this purpose, there should be registered at...
+
+The source code and a DB export.
+
+All the above (1) and (2) are submitted in a compressed file on eclass.

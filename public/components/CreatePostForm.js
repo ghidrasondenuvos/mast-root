@@ -25,7 +25,7 @@ export function renderCreatePost(navigate, state) {
         <div class="glass-panel" style="padding: var(--space-xl);">
             <div style="text-align: center; margin-bottom: var(--space-xl);">
                 <div style="font-size: 3rem; margin-bottom: var(--space-xs);">👨‍🍳</div>
-                <h2 class="font-heading" style="color: var(--text-primary); font-size: 2rem; font-weight: 800; margin: 0;">Μοιράσου Φαγητό</h2>
+                <h2 class="font-heading" style="color: var(--text-primary); font-size: 2rem; font-weight: 800; margin: 0;">${state.navData && state.navData.post ? 'Επεξεργασία Αγγελίας' : 'Μοιράσου Φαγητό'}</h2>
                 <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 6px;">Συμπλήρωσε τις λεπτομέρειες της μερίδας σου</p>
             </div>
 
@@ -35,6 +35,37 @@ export function renderCreatePost(navigate, state) {
                 <div>
                     <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: var(--space-xs); font-weight: 500;">Τι μαγείρεψες;</label>
                     <input type="text" id="cp-title" class="releaf-input" placeholder="π.χ. Παστίτσιο της μαμάς" required style="font-size: 1.1rem; padding: 14px;" />
+                </div>
+
+                <!-- Photo Upload -->
+                <div>
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: var(--space-xs); font-weight: 500;">📷 Φωτογραφία Πιάτου (Προαιρετικό)</label>
+                    <div id="cp-photo-area" style="
+                        border: 2px dashed var(--border-hover);
+                        border-radius: var(--radius-md);
+                        padding: var(--space-xl);
+                        text-align: center;
+                        cursor: pointer;
+                        transition: all var(--transition-base);
+                        background: rgba(255,255,255,0.02);
+                    ">
+                        <div id="cp-photo-placeholder">
+                            <div style="font-size: 2.5rem; margin-bottom: var(--space-sm); opacity: 0.5;">📸</div>
+                            <p style="color: var(--text-tertiary); font-size: 0.85rem; margin: 0;">Κάνε κλικ ή σύρε μια εικόνα εδώ</p>
+                            <p style="color: var(--text-tertiary); font-size: 0.75rem; margin-top: 4px;">JPG, PNG — Μέγιστο 5MB</p>
+                        </div>
+                        <div id="cp-photo-preview" class="hidden" style="position: relative;">
+                            <img id="cp-photo-img" style="max-width: 100%; max-height: 250px; border-radius: var(--radius-sm); object-fit: cover;" />
+                            <button type="button" id="cp-photo-remove" style="
+                                position: absolute; top: 8px; right: 8px;
+                                background: rgba(0,0,0,0.7); border: none; color: #fff;
+                                width: 28px; height: 28px; border-radius: 50%;
+                                cursor: pointer; font-size: 1rem; display: flex;
+                                align-items: center; justify-content: center;
+                            ">✕</button>
+                        </div>
+                    </div>
+                    <input type="file" id="cp-photo-input" accept="image/*" style="display: none;" />
                 </div>
 
                 <!-- Portions & Time Row -->
@@ -86,25 +117,96 @@ export function renderCreatePost(navigate, state) {
                 <!-- Submit Area -->
                 <div style="display: flex; gap: var(--space-md); margin-top: var(--space-sm);">
                     <button type="button" id="cp-cancel" class="releaf-button secondary" style="flex: 1; justify-content: center; padding: 14px;">Ακύρωση</button>
-                    <button type="submit" id="cp-submit-btn" class="releaf-button" style="flex: 2; justify-content: center; padding: 14px; font-size: 1rem;">Δημοσίευση Αγγελίας</button>
+                    <button type="submit" id="cp-submit-btn" class="releaf-button" style="flex: 2; justify-content: center; padding: 14px; font-size: 1rem;">${state.navData && state.navData.post ? 'Αποθήκευση Αλλαγών' : 'Δημοσίευση Αγγελίας'}</button>
                 </div>
                 <div id="cp-msg" style="color: var(--danger); font-size: 0.9rem; text-align: center; min-height: 20px;"></div>
             </form>
         </div>
     `;
 
-    // Map Initialization
+    // ========== PHOTO UPLOAD LOGIC ==========
+    let uploadedPhotoUrl = null;
+    const photoArea = container.querySelector('#cp-photo-area');
+    const photoInput = container.querySelector('#cp-photo-input');
+    const photoPlaceholder = container.querySelector('#cp-photo-placeholder');
+    const photoPreview = container.querySelector('#cp-photo-preview');
+    const photoImg = container.querySelector('#cp-photo-img');
+    const photoRemove = container.querySelector('#cp-photo-remove');
+
+    photoArea.onclick = () => photoInput.click();
+
+    photoInput.onchange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            previewAndUpload(e.target.files[0]);
+        }
+    };
+
+    // Drag & drop
+    photoArea.ondragover = (e) => { e.preventDefault(); photoArea.style.borderColor = 'var(--accent)'; photoArea.style.background = 'rgba(245,158,11,0.05)'; };
+    photoArea.ondragleave = () => { photoArea.style.borderColor = 'var(--border-hover)'; photoArea.style.background = 'rgba(255,255,255,0.02)'; };
+    photoArea.ondrop = (e) => {
+        e.preventDefault();
+        photoArea.style.borderColor = 'var(--border-hover)';
+        photoArea.style.background = 'rgba(255,255,255,0.02)';
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            previewAndUpload(e.dataTransfer.files[0]);
+        }
+    };
+
+    photoRemove.onclick = (e) => {
+        e.stopPropagation();
+        uploadedPhotoUrl = null;
+        photoPlaceholder.classList.remove('hidden');
+        photoPreview.classList.add('hidden');
+        photoInput.value = '';
+    };
+
+    async function previewAndUpload(file) {
+        if (!file.type.startsWith('image/')) {
+            showToast('Μόνο εικόνες επιτρέπονται.', 'error');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Η εικόνα δεν πρέπει να ξεπερνάει τα 5MB.', 'error');
+            return;
+        }
+
+        // Preview immediately
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            photoImg.src = e.target.result;
+            photoPlaceholder.classList.add('hidden');
+            photoPreview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+
+        // Upload to server
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (res.ok) {
+                uploadedPhotoUrl = data.url;
+                showToast('Η εικόνα ανέβηκε!', 'success');
+            } else {
+                showToast(data.detail || 'Σφάλμα upload', 'error');
+            }
+        } catch (err) {
+            showToast('Σφάλμα upload εικόνας.', 'error');
+        }
+    }
+
+    // ========== MAP INITIALIZATION ==========
     setTimeout(() => {
         const mapEl = container.querySelector('#cp-map');
         if (mapEl) {
-            const map = L.map(mapEl).setView([38.287, 21.788], 14); // UPATRAS Coordinates
+            const map = L.map(mapEl).setView([38.287, 21.788], 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
                 attribution: '© OpenStreetMap' 
             }).addTo(map);
             
             let marker = null;
-            
-            // Fix map rendering issue in hidden containers
             setTimeout(() => map.invalidateSize(), 100);
 
             map.on('click', async (e) => {
@@ -115,7 +217,6 @@ export function renderCreatePost(navigate, state) {
                 if (marker) map.removeLayer(marker);
                 marker = L.marker([lat, lng]).addTo(map);
 
-                // Reverse Geocoding
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
                     const data = await res.json();
@@ -128,7 +229,6 @@ export function renderCreatePost(navigate, state) {
                 }
             });
 
-            // Geolocation button handler
             const geoBtn = container.querySelector('#cp-geolocate-btn');
             if (geoBtn) {
                 geoBtn.onclick = () => {
@@ -175,6 +275,34 @@ export function renderCreatePost(navigate, state) {
         }
     }, 100);
 
+    // Pre-fill form if editing
+    if (state.navData && state.navData.post) {
+        const p = state.navData.post;
+        container.querySelector('#cp-title').value = p.title || '';
+        container.querySelector('#cp-portions').value = p.total_portions || '';
+        
+        if (p.pickup_time) {
+            const times = p.pickup_time.split('-');
+            if (times.length === 2) {
+                container.querySelector('#cp-time-from').value = times[0].trim();
+                container.querySelector('#cp-time-to').value = times[1].trim();
+            }
+        }
+        
+        container.querySelector('#cp-notes').value = p.notes || '';
+        container.querySelector('#cp-allergens').value = p.allergens || '';
+        container.querySelector('#cp-location').value = p.pickup_location || '';
+        container.querySelector('#cp-lat').value = p.latitude || '';
+        container.querySelector('#cp-lng').value = p.longitude || '';
+        
+        if (p.photo_url) {
+            uploadedPhotoUrl = p.photo_url;
+            photoImg.src = p.photo_url;
+            photoPlaceholder.classList.add('hidden');
+            photoPreview.classList.remove('hidden');
+        }
+    }
+
     container.querySelector('#cp-cancel').onclick = () => navigate('dashboard');
 
     container.querySelector('#create-post-form').onsubmit = async (e) => {
@@ -196,33 +324,49 @@ export function renderCreatePost(navigate, state) {
         const payload = {
             cook_id: state.loggedInUser.id,
             title: title,
+            photo_url: uploadedPhotoUrl || null,
             notes: container.querySelector('#cp-notes').value.trim(),
             allergens: container.querySelector('#cp-allergens').value.trim(),
             pickup_location: loc,
             latitude: container.querySelector('#cp-lat').value || null,
             longitude: container.querySelector('#cp-lng').value || null,
             pickup_time: `${timeFrom} - ${timeTo}`,
-            total_portions: parseInt(portions)
+            total_portions: parseInt(portions),
+            available_portions: parseInt(portions) // Set available to total on edit, although maybe we shouldn't overwrite it if it's an edit and some were requested...
         };
 
-        submitBtn.textContent = 'Δημοσίευση...';
+        const isEditing = state.navData && state.navData.post;
+        
+        if (isEditing) {
+            // Keep the previous available portions logic accurate. If total increases by 2, available increases by 2.
+            const oldTotal = state.navData.post.total_portions;
+            const oldAvailable = state.navData.post.available_portions;
+            const diff = payload.total_portions - oldTotal;
+            payload.available_portions = oldAvailable + diff;
+            if (payload.available_portions < 0) payload.available_portions = 0;
+        }
+
+        submitBtn.textContent = 'Αποθήκευση...';
         submitBtn.disabled = true;
         msgDiv.textContent = '';
 
         try {
-            const res = await fetch('/api/posts', {
-                method: 'POST',
+            const url = isEditing ? `/api/posts/${state.navData.post.id}` : '/api/posts';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                showToast('Η αγγελία δημοσιεύτηκε επιτυχώς!', 'success');
+                showToast(isEditing ? 'Η αγγελία ενημερώθηκε!' : 'Η αγγελία δημοσιεύτηκε επιτυχώς!', 'success');
                 navigate('dashboard');
             } else {
                 const data = await res.json();
                 msgDiv.textContent = sanitize(data.detail || 'Σφάλμα');
-                submitBtn.textContent = 'Δημοσίευση Αγγελίας';
+                submitBtn.textContent = isEditing ? 'Αποθήκευση Αλλαγών' : 'Δημοσίευση Αγγελίας';
                 submitBtn.disabled = false;
             }
         } catch (e) {

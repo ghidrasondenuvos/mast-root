@@ -8,6 +8,8 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     role ENUM('student', 'admin') DEFAULT 'student',
     credits INT DEFAULT 5,
+    phone VARCHAR(20) DEFAULT NULL,
+    address VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -34,7 +36,7 @@ CREATE TABLE requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL,
     consumer_id INT NOT NULL,
-    status ENUM('pending', 'approved', 'rejected', 'received', 'no_show') DEFAULT 'pending',
+    status ENUM('pending', 'approved', 'rejected', 'delivered', 'no_show') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
@@ -44,12 +46,14 @@ CREATE TABLE requests (
 CREATE TABLE reviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
     request_id INT NOT NULL,
+    reviewer_id INT NOT NULL,
     consumer_id INT NOT NULL,
     cook_id INT NOT NULL,
     rating INT CHECK (rating >= 1 AND rating <= 5),
     comment TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (consumer_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (cook_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -57,7 +61,7 @@ CREATE TABLE reviews (
 CREATE TABLE notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    type ENUM('request_approved','request_rejected','new_request','received','no_show','credit_earned','welcome') DEFAULT 'welcome',
+    type ENUM('request_approved','request_rejected','new_request','delivered','no_show','credit_earned','welcome') DEFAULT 'welcome',
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     reference_id INT DEFAULT NULL,
@@ -81,7 +85,7 @@ CREATE INDEX idx_requests_post ON requests(post_id, status);
 CREATE INDEX idx_requests_consumer ON requests(consumer_id, status);
 CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
 CREATE INDEX idx_credit_tx_user ON credit_transactions(user_id);
-CREATE UNIQUE INDEX idx_unique_review ON reviews(request_id);
+CREATE UNIQUE INDEX idx_unique_review ON reviews(request_id, reviewer_id);
 
 -- Insert a default Admin
 INSERT INTO users (username, email, password, role, credits) VALUES 

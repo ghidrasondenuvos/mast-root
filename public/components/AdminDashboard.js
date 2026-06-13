@@ -93,61 +93,116 @@ export function renderAdminDashboard(navigate, state) {
                 // Render User Management Table
                 const userTbody = container.querySelector('#admin-users-table tbody');
                 userTbody.innerHTML = '';
-                users.forEach((u, idx) => {
+                const renderRow = (tr, u, isEdit = false) => {
+                    if (isEdit) {
+                        tr.innerHTML = `
+                            <td style="padding: 14px var(--space-md); color: var(--text-tertiary);">${u.id}</td>
+                            <td style="padding: 14px var(--space-md);">
+                                <input type="text" class="releaf-input edit-username" value="${sanitize(u.username)}" style="padding: 4px 8px; width: 100%;">
+                            </td>
+                            <td style="padding: 14px var(--space-md);">
+                                <input type="text" class="releaf-input edit-email" value="${sanitize(u.email)}" style="padding: 4px 8px; width: 100%;">
+                            </td>
+                            <td style="padding: 14px var(--space-md);">
+                                <select class="releaf-input edit-role" style="padding: 4px 8px;">
+                                    <option value="student" ${u.role==='student'?'selected':''}>student</option>
+                                    <option value="admin" ${u.role==='admin'?'selected':''}>admin</option>
+                                </select>
+                            </td>
+                            <td style="padding: 14px var(--space-md); color: var(--accent); font-weight: 700; font-size: 1.1rem;">${u.credits}</td>
+                            <td style="padding: 14px var(--space-md); display: flex; gap: 8px;">
+                                <button class="releaf-button save-user-btn" style="padding: 6px 12px; font-size: 0.75rem; background: var(--success);">Αποθήκευση</button>
+                                <button class="releaf-button secondary cancel-edit-btn" style="padding: 6px 12px; font-size: 0.75rem;">Ακύρωση</button>
+                            </td>
+                        `;
+
+                        tr.querySelector('.cancel-edit-btn').onclick = () => renderRow(tr, u, false);
+                        tr.querySelector('.save-user-btn').onclick = async () => {
+                            const newUsername = tr.querySelector('.edit-username').value.trim();
+                            const newEmail = tr.querySelector('.edit-email').value.trim();
+                            const newRole = tr.querySelector('.edit-role').value;
+
+                            if (!newUsername || !newEmail) {
+                                showToast('Τα πεδία Username και Email δεν μπορούν να είναι κενά!', 'error');
+                                return;
+                            }
+
+                            try {
+                                const res = await fetch(`/api/admin/users/${u.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ username: newUsername, email: newEmail, role: newRole })
+                                });
+                                if (res.ok) {
+                                    const updated = await res.json();
+                                    showToast('Επιτυχής ενημέρωση χρήστη.', 'success');
+                                    renderRow(tr, updated, false);
+                                } else {
+                                    const data = await res.json();
+                                    showToast(data.detail || 'Σφάλμα.', 'error');
+                                }
+                            } catch (err) {
+                                showToast('Σφάλμα δικτύου.', 'error');
+                            }
+                        };
+                    } else {
+                        const roleBadge = u.role === 'admin' 
+                            ? '<span style="background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 2px 8px; border-radius: 12px; font-size: 0.7rem;">ADMIN</span>'
+                            : '<span style="color: var(--text-secondary);">student</span>';
+
+                        tr.innerHTML = `
+                            <td style="padding: 14px var(--space-md); color: var(--text-tertiary);">${u.id}</td>
+                            <td style="padding: 14px var(--space-md); font-weight: 700; color: var(--text-primary); font-family: var(--font-heading);">${sanitize(u.username)}</td>
+                            <td style="padding: 14px var(--space-md); color: var(--text-secondary);">${sanitize(u.email)}</td>
+                            <td style="padding: 14px var(--space-md);">${roleBadge}</td>
+                            <td style="padding: 14px var(--space-md); color: var(--accent); font-weight: 700; font-size: 1.1rem;" id="admin-user-credits-${u.id}">${u.credits}</td>
+                            <td style="padding: 14px var(--space-md); display: flex; gap: 8px;">
+                                <button class="releaf-button secondary edit-user-btn" style="padding: 6px 12px; font-size: 0.75rem;">Επεξεργασία</button>
+                                <button class="releaf-button secondary adjust-credits-btn" style="padding: 6px 12px; font-size: 0.75rem;">Αλλαγή Credits</button>
+                            </td>
+                        `;
+
+                        tr.querySelector('.edit-user-btn').onclick = () => renderRow(tr, u, true);
+                        
+                        tr.querySelector('.adjust-credits-btn').onclick = async () => {
+                            const amountStr = prompt(`Πόσα credits θέλετε να προσθέσετε (ή να αφαιρέσετε με μείον) στον/στην ${u.username};`);
+                            if(amountStr === null) return;
+                            const amount = parseInt(amountStr);
+                            if (isNaN(amount)) {
+                                showToast('Παρακαλώ εισάγετε έγκυρο αριθμό.', 'error');
+                                return;
+                            }
+                            const reason = prompt(`Αιτιολογία για αυτή την αλλαγή:`) || 'Διαχειριστική ρύθμιση';
+                            
+                            try {
+                                const res = await fetch(`/api/admin/users/${u.id}/credits`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ credits_change: amount, reason })
+                                });
+                                if (res.ok) {
+                                    const updatedUser = await res.json();
+                                    renderRow(tr, updatedUser, false);
+                                    showToast(`Τα credits του χρήστη ${u.username} ενημερώθηκαν.`, 'success');
+                                } else {
+                                    showToast('Σφάλμα ενημέρωσης.', 'error');
+                                }
+                            } catch (err) {
+                                showToast('Σφάλμα σύνδεσης.', 'error');
+                            }
+                        };
+                    }
+                };
+
+                users.forEach((u) => {
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = "1px solid var(--border)";
                     tr.style.transition = "background var(--transition-fast)";
                     tr.onmouseenter = () => tr.style.background = "rgba(255,255,255,0.02)";
                     tr.onmouseleave = () => tr.style.background = "none";
                     
-                    const roleBadge = u.role === 'admin' 
-                        ? '<span style="background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 2px 8px; border-radius: 12px; font-size: 0.7rem;">ADMIN</span>'
-                        : '<span style="color: var(--text-secondary);">student</span>';
-
-                    tr.innerHTML = `
-                        <td style="padding: 14px var(--space-md); color: var(--text-tertiary);">${u.id}</td>
-                        <td style="padding: 14px var(--space-md); font-weight: 700; color: var(--text-primary); font-family: var(--font-heading);">${sanitize(u.username)}</td>
-                        <td style="padding: 14px var(--space-md); color: var(--text-secondary);">${sanitize(u.email)}</td>
-                        <td style="padding: 14px var(--space-md);">${roleBadge}</td>
-                        <td style="padding: 14px var(--space-md); color: var(--accent); font-weight: 700; font-size: 1.1rem;" id="admin-user-credits-${u.id}">${u.credits}</td>
-                        <td style="padding: 14px var(--space-md);">
-                            <button class="releaf-button secondary adjust-credits-btn" data-id="${u.id}" data-name="${sanitize(u.username)}" style="padding: 6px 12px; font-size: 0.75rem;">Αλλαγή Credits</button>
-                        </td>
-                    `;
+                    renderRow(tr, u, false);
                     userTbody.appendChild(tr);
-                });
-
-                // Attach adjust credits events
-                container.querySelectorAll('.adjust-credits-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const uid = e.target.getAttribute('data-id');
-                        const uname = e.target.getAttribute('data-name');
-                        const amountStr = prompt(`Πόσα credits θέλετε να προσθέσετε (ή να αφαιρέσετε με μείον) στον/στην ${uname};`);
-                        if(amountStr === null) return;
-                        const amount = parseInt(amountStr);
-                        if (isNaN(amount)) {
-                            showToast('Παρακαλώ εισάγετε έγκυρο αριθμό.', 'error');
-                            return;
-                        }
-                        const reason = prompt(`Αιτιολογία για αυτή την αλλαγή:`) || 'Διαχειριστική ρύθμιση';
-                        
-                        try {
-                            const res = await fetch(`/api/admin/users/${uid}/credits`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ credits_change: amount, reason })
-                            });
-                            if (res.ok) {
-                                const updatedUser = await res.json();
-                                container.querySelector(`#admin-user-credits-${uid}`).textContent = updatedUser.credits;
-                                showToast(`Τα credits του χρήστη ${uname} ενημερώθηκαν.`, 'success');
-                            } else {
-                                showToast('Σφάλμα ενημέρωσης.', 'error');
-                            }
-                        } catch (err) {
-                            showToast('Σφάλμα σύνδεσης.', 'error');
-                        }
-                    });
                 });
             });
 

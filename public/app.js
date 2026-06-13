@@ -61,8 +61,9 @@ export function fetchNotificationCount() {
         .catch(() => {});
 }
 
-export function navigate(view) {
+export function navigate(view, navData = null) {
     state.currentView = view;
+    state.navData = navData;
     state.isSidebarOpen = false;
     renderApp();
 }
@@ -78,6 +79,17 @@ export function setLoggedInUser(user) {
                 if (notifInterval) clearInterval(notifInterval);
                 notifInterval = setInterval(fetchNotificationCount, 30000);
                 renderApp();
+                // Check for pending reviews and notify
+                fetch(`/api/pending-reviews/${data.id}`)
+                    .then(r => r.json())
+                    .then(pending => {
+                        if (pending.length > 0) {
+                            setTimeout(() => {
+                                showToast(`🌟 Έχεις ${pending.length} γεύμα(τα) που περιμένουν αξιολόγηση!`, 'info');
+                            }, 1500);
+                        }
+                    })
+                    .catch(() => {});
             })
             .catch(() => {});
     } else {
@@ -190,10 +202,13 @@ export function renderApp() {
             <div style="display:flex; align-items:center; justify-content:center; gap:80px; max-width:1100px; width:100%; padding:0 40px; animation:fadeInUp 0.7s cubic-bezier(0.16,1,0.3,1);">
                 <div style="flex:1; max-width:520px;">
                     <div style="display:inline-block; padding:6px 16px; border-radius:var(--radius-full); background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); font-family:var(--font-mono); font-size:0.78rem; color:var(--accent); margin-bottom:20px; font-weight:500;">🎓 Αποκλειστικά για φοιτητές</div>
-                    <h1 style="font-family:var(--font-heading); font-size:3.5rem; font-weight:800; line-height:1.1; margin-bottom:20px; color:var(--text-primary);">
-                        Μοιράσου το<br><span style="background:linear-gradient(135deg, var(--accent), #FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">σπιτικό φαγητό</span> σου.
+                    <h1 style="font-family:var(--font-heading); font-size:3.5rem; font-weight:800; line-height:1.1; margin-bottom:12px; color:var(--text-primary);">
+                        Συνδέσου.<br><span style="background:linear-gradient(135deg, var(--accent), #FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Κοινωνικοποιήσου.</span>
                     </h1>
-                    <p style="font-size:1.05rem; color:var(--text-secondary); line-height:1.7; margin-bottom:32px; max-width:440px;">
+                    <p style="font-size:1.15rem; color:rgba(255,255,255,0.85); line-height:1.6; margin-bottom:10px; max-width:440px; font-style:italic;">
+                        «Ένα καλό γεύμα φτιάχνει μια πλούσια φιλία.»
+                    </p>
+                    <p style="font-size:1rem; color:var(--text-secondary); line-height:1.7; margin-bottom:32px; max-width:440px;">
                         Μαγείρεψες παραπάνω; Μην το πετάς! Μοιράσου τις μερίδες σου με συμφοιτητές, κέρδισε <strong style="color:var(--accent)">credits</strong> και δοκίμασε εσύ το φαγητό τους την επόμενη φορά.
                     </p>
                     <div style="display:flex; gap:12px; align-items:center;">

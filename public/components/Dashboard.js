@@ -10,6 +10,24 @@ export function renderDashboard(navigate, state) {
     const user = state.loggedInUser;
 
     container.innerHTML = `
+        <!-- REVIEW BANNER (hidden by default) -->
+        <div id="review-banner" class="hidden" style="
+            background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(251,191,36,0.1));
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg) var(--space-xl);
+            margin-bottom: var(--space-lg);
+            display: flex; align-items: center; gap: var(--space-lg);
+            animation: fadeInUp 0.5s ease;
+        ">
+            <div style="font-size: 3rem; animation: float 2s ease-in-out infinite;">🌟</div>
+            <div style="flex: 1;">
+                <h3 class="font-heading" style="margin: 0 0 4px 0; color: var(--accent); font-size: 1.2rem;">Έχεις φαγητό να αξιολογήσεις!</h3>
+                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;" id="review-banner-text">Πες μας πώς ήταν το γεύμα σου.</p>
+            </div>
+            <button id="review-banner-btn" class="releaf-button" style="padding: 10px 24px; white-space: nowrap;">Αξιολόγησε τώρα ↓</button>
+        </div>
+
         <div class="glass-panel" style="padding: var(--space-xl); margin-bottom: var(--space-lg); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md);">
             <div>
                 <h2 class="font-heading" style="margin: 0 0 var(--space-xs) 0; color: var(--text-primary); font-size: 2rem; font-weight: 800;">
@@ -27,11 +45,12 @@ export function renderDashboard(navigate, state) {
 
         <div class="tab-bar">
             <button class="tab-item active" data-tab="requests">Αιτήματα & Παραδόσεις</button>
+            <button class="tab-item" data-tab="myposts">Οι Αγγελίες Μου</button>
             <button class="tab-item" data-tab="history">Ιστορικό Credits</button>
             <button class="tab-item" data-tab="notifications">Ειδοποιήσεις <span class="badge" style="background: var(--danger); color: white; padding: 2px 6px; font-size: 0.7rem; border: none; margin-left: 6px; display: ${state.notificationCount > 0 ? 'inline-block' : 'none'};">${state.notificationCount}</span></button>
         </div>
 
-        <div id="tab-content" style="width: 100%;">
+        <div id="tab-content" style="width: 100;">
             <!-- Content will be injected here -->
         </div>
     `;
@@ -47,11 +66,42 @@ export function renderDashboard(navigate, state) {
         });
     });
 
+    // Check for pending reviews and show banner
+    fetch(`/api/pending-reviews/${user.id}`)
+        .then(res => res.json())
+        .then(pending => {
+            if (pending.length > 0) {
+                const banner = container.querySelector('#review-banner');
+                banner.classList.remove('hidden');
+                const text = container.querySelector('#review-banner-text');
+                if (pending.length === 1) {
+                    text.textContent = pending[0].cook_id === user.id 
+                        ? `Ο/Η ${pending[0].consumer_name} παρέλαβε "${pending[0].post_title}". Πες μας πώς ήταν η συνεργασία!`
+                        : `Παρέλαβες "${pending[0].post_title}" από ${pending[0].cook_name}. Πες μας πώς ήταν!`;
+                } else {
+                    text.textContent = `Έχεις ${pending.length} γεύματα που περιμένουν αξιολόγηση!`;
+                }
+                container.querySelector('#review-banner-btn').onclick = () => {
+                    // Switch to requests tab and scroll to consumer section
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabs[0].classList.add('active');
+                    renderTab('requests');
+                    setTimeout(() => {
+                        const consumerList = tabContent.querySelector('#consumer-requests-list');
+                        if (consumerList) consumerList.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                };
+            }
+        })
+        .catch(() => {});
+
     function renderTab(tabName) {
         tabContent.innerHTML = '';
         tabContent.className = 'fade-in';
         if (tabName === 'requests') {
             renderRequestsTab();
+        } else if (tabName === 'myposts') {
+            renderMyPostsTab();
         } else if (tabName === 'history') {
             const histComp = renderCreditHistory(navigate, state);
             tabContent.appendChild(histComp);
@@ -59,6 +109,88 @@ export function renderDashboard(navigate, state) {
             const notifComp = renderNotifications(navigate, state);
             tabContent.appendChild(notifComp);
         }
+    }
+
+    function renderMyPostsTab() {
+        tabContent.innerHTML = `
+            <div class="glass-panel" style="padding: var(--space-lg);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-md); border-bottom: 1px solid var(--border); padding-bottom: var(--space-sm);">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.5rem;">📝</span>
+                        <h3 class="font-heading" style="margin: 0; font-size: 1.2rem; color: var(--accent);">Οι Αγγελίες Μου</h3>
+                    </div>
+                    <button id="create-new-btn" class="releaf-button" style="padding: 6px 14px; font-size: 0.85rem;">+ Νέα Αγγελία</button>
+                </div>
+                <div id="myposts-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-md);">
+                    <div class="skeleton" style="height: 150px; border-radius: var(--radius-md);"></div>
+                    <div class="skeleton" style="height: 150px; border-radius: var(--radius-md);"></div>
+                </div>
+            </div>
+        `;
+
+        tabContent.querySelector('#create-new-btn').onclick = () => navigate('create_post');
+
+        fetch(`/api/posts?cook_id=${user.id}`)
+            .then(res => res.json())
+            .then(posts => {
+                const list = tabContent.querySelector('#myposts-list');
+                if (!list) return;
+                list.innerHTML = '';
+                if (posts.length === 0) {
+                    list.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: var(--space-xl) 0; opacity: 0.6;">
+                            <div style="font-size: 2.5rem; margin-bottom: 8px;">📭</div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">Δεν έχεις δημιουργήσει καμία αγγελία.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                posts.forEach((post, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'glass-card stagger';
+                    card.style.animationDelay = `${idx * 0.05}s`;
+                    card.style.padding = 'var(--space-md)';
+                    card.style.display = 'flex';
+                    card.style.flexDirection = 'column';
+                    
+                    const isActive = post.status === 'active';
+
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-family: var(--font-heading); font-size: 1.05rem;">${sanitize(post.title)}</div>
+                            <span class="status-badge status-${isActive ? 'approved' : 'rejected'}">${isActive ? 'Ενεργή' : 'Ανενεργή'}</span>
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: var(--space-sm);">
+                            <div><strong>Μερίδες:</strong> ${post.available_portions} / ${post.total_portions}</div>
+                            <div><strong>Δημιουργήθηκε:</strong> ${new Date(post.created_at).toLocaleString('el-GR')}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: auto;">
+                            <button class="releaf-button secondary edit-btn" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">✏️ Επεξεργασία</button>
+                            <button class="releaf-button danger del-btn" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">🗑️ Διαγραφή</button>
+                        </div>
+                    `;
+
+                    card.querySelector('.edit-btn').onclick = () => navigate('create_post', { post });
+                    card.querySelector('.del-btn').onclick = async () => {
+                        if (confirm('Σίγουρα θέλεις να διαγράψεις αυτή την αγγελία;')) {
+                            try {
+                                const res = await fetch(`/api/posts/${post.id}`, { method: 'DELETE' });
+                                if (res.ok) {
+                                    showToast('Η αγγελία διαγράφηκε.', 'success');
+                                    renderTab('myposts');
+                                } else {
+                                    showToast('Σφάλμα κατά τη διαγραφή.', 'error');
+                                }
+                            } catch (e) {
+                                showToast('Σφάλμα σύνδεσης.', 'error');
+                            }
+                        }
+                    };
+
+                    list.appendChild(card);
+                });
+            });
     }
 
     function renderRequestsTab() {
@@ -143,7 +275,7 @@ export function renderDashboard(navigate, state) {
                                 <button class="releaf-button danger noshow-btn" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">Δεν Εμφανίστηκε</button>
                             </div>
                         `;
-                        card.querySelector('.received-btn').onclick = () => handleCompletion(req.id, 'received');
+                        card.querySelector('.received-btn').onclick = () => handleCompletion(req.id, 'delivered');
                         card.querySelector('.noshow-btn').onclick = () => handleCompletion(req.id, 'no_show');
                     }
                     list.appendChild(card);
@@ -173,6 +305,9 @@ export function renderDashboard(navigate, state) {
                     card.className = 'glass-card stagger';
                     card.style.animationDelay = `${idx * 0.05}s`;
                     card.style.padding = 'var(--space-md)';
+
+                    const needsReview = req.status === 'delivered';
+
                     card.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <div style="font-weight: 700; color: var(--text-primary); font-family: var(--font-heading); font-size: 1.05rem;">${sanitize(req.post_title)}</div>
@@ -184,23 +319,46 @@ export function renderDashboard(navigate, state) {
                         </div>
                     `;
 
-                    if (req.status === 'received') {
+                    if (req.status === 'approved') {
                         card.innerHTML += `
-                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 10px; border-radius: var(--radius-sm); margin-top: auto;">
-                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px;">Αξιολόγησε τον μάγειρα:</div>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <select class="releaf-input rating-select" style="padding: 6px 10px; font-size: 0.8rem; flex: 1;">
+                            <div style="display: flex; gap: 8px; margin-top: auto; margin-bottom: 8px;">
+                                <button class="releaf-button indigo received-btn" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">Παραδόθηκε ✓</button>
+                                <button class="releaf-button danger noshow-btn" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">Δεν Εμφανίστηκε</button>
+                            </div>
+                        `;
+                        card.querySelector('.received-btn').onclick = () => handleCompletion(req.id, 'delivered');
+                        card.querySelector('.noshow-btn').onclick = () => handleCompletion(req.id, 'no_show');
+                    }
+
+                    if (needsReview) {
+                        card.style.border = '1px solid rgba(245,158,11,0.4)';
+                        card.style.background = 'rgba(245,158,11,0.06)';
+                        card.style.boxShadow = '0 0 20px rgba(245,158,11,0.1)';
+                        
+                        card.innerHTML += `
+                            <div style="background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(251,191,36,0.05)); border: 1px solid rgba(245,158,11,0.2); padding: var(--space-md); border-radius: var(--radius-md); margin-top: auto;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: var(--space-sm);">
+                                    <span style="font-size: 1.2rem;">⭐</span>
+                                    <span style="font-size: 0.9rem; color: var(--accent); font-weight: 600;">Αξιολόγησε αυτό το γεύμα!</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-sm);">
+                                    <select class="releaf-input rating-select" style="padding: 8px 12px; font-size: 0.85rem; flex: 1;">
                                         <option value="5">⭐⭐⭐⭐⭐ Τέλεια!</option>
                                         <option value="4">⭐⭐⭐⭐ Πολύ καλά</option>
                                         <option value="3">⭐⭐⭐ Μέτρια</option>
                                         <option value="2">⭐⭐ Κακούτσικα</option>
                                         <option value="1">⭐ Πολύ κακά</option>
                                     </select>
-                                    <button class="releaf-button rate-btn" style="padding: 6px 14px; font-size: 0.8rem; white-space: nowrap;">Βαθμολογία</button>
                                 </div>
+                                <textarea class="releaf-input review-comment" placeholder="Γράψε ένα σχόλιο για το φαγητό... (προαιρετικό)" style="padding: 10px 12px; font-size: 0.85rem; height: 60px; resize: vertical; margin-bottom: var(--space-sm);"></textarea>
+                                <button class="releaf-button rate-btn" style="width: 100%; justify-content: center; padding: 10px 14px; font-size: 0.9rem;">🌟 Υποβολή Αξιολόγησης</button>
                             </div>
                         `;
-                        card.querySelector('.rate-btn').onclick = () => handleRating(req.id, req.cook_id, card.querySelector('.rating-select').value);
+                        card.querySelector('.rate-btn').onclick = () => {
+                            const rating = card.querySelector('.rating-select').value;
+                            const comment = card.querySelector('.review-comment').value.trim();
+                            handleRating(req.id, user.id, req.cook_id, rating, comment);
+                        };
                     }
                     list.appendChild(card);
                 });
@@ -245,16 +403,19 @@ export function renderDashboard(navigate, state) {
         }
     }
 
-    async function handleRating(req_id, cook_id, rating) {
+    async function handleRating(req_id, consumer_id, cook_id, rating, comment) {
         try {
             const res = await fetch('/api/reviews', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ request_id: req_id, consumer_id: user.id, cook_id, rating: parseInt(rating) })
+                body: JSON.stringify({ request_id: req_id, reviewer_id: user.id, consumer_id, cook_id, rating: parseInt(rating), comment: comment || null })
             });
             const data = await res.json();
             if(res.ok) {
-                showToast(data.message, 'success');
+                showToast('🌟 ' + data.message, 'success');
+                // Hide review banner if no more pending
+                const banner = container.querySelector('#review-banner');
+                if (banner) banner.classList.add('hidden');
                 fetchConsumerRequests();
             } else {
                 showToast(data.detail, 'error');
