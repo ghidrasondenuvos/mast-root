@@ -23,6 +23,14 @@ export function renderFeed(navigate, state) {
                         <option value="portions">Περισσότερες Μερίδες</option>
                         <option value="distance">Πιο Κοντά Μου</option>
                     </select>
+
+                    <!-- Radius Filter -->
+                    <select id="feed-radius" class="releaf-input" style="padding: 8px 16px; border-radius: var(--radius-full); font-size: 0.85rem; width: auto; background-color: var(--surface-elevated);">
+                        <option value="all">Απόσταση: Όλα</option>
+                        <option value="2">Κάτω από 2 km</option>
+                        <option value="5">Κάτω από 5 km</option>
+                        <option value="10">Κάτω από 10 km</option>
+                    </select>
                 </div>
             </div>
             
@@ -64,6 +72,7 @@ export function renderFeed(navigate, state) {
     let currentFilter = 'all';
     let searchQuery = '';
     let currentSort = 'newest';
+    let currentRadius = 'all';
     let currentMode = 'list'; // 'list' or 'map'
     let map = null;
     let mapMarkers = [];
@@ -76,6 +85,7 @@ export function renderFeed(navigate, state) {
     const viewListBtn = container.querySelector('#view-list-btn');
     const viewMapBtn = container.querySelector('#view-map-btn');
     const sortSelect = container.querySelector('#feed-sort');
+    const radiusSelect = container.querySelector('#feed-radius');
 
     // --- Mode Toggle ---
     viewListBtn.onclick = () => {
@@ -119,29 +129,46 @@ export function renderFeed(navigate, state) {
     sortSelect.addEventListener('change', (e) => {
         currentSort = e.target.value;
         if (currentSort === 'distance') {
-            if (!navigator.geolocation) {
-                showToast('Η τοποθεσία δεν υποστηρίζεται.', 'error');
-                sortSelect.value = 'newest';
-                currentSort = 'newest';
-                return;
-            }
-            showToast('Εντοπισμός τοποθεσίας...', 'info');
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    renderPosts();
-                },
-                (err) => {
-                    showToast('Αποτυχία εντοπισμού.', 'error');
-                    sortSelect.value = 'newest';
-                    currentSort = 'newest';
-                    renderPosts();
-                }
-            );
+            requestLocationAndRender();
         } else {
             renderPosts();
         }
     });
+
+    radiusSelect.addEventListener('change', (e) => {
+        currentRadius = e.target.value;
+        if (currentRadius !== 'all' && !userLocation) {
+            requestLocationAndRender();
+        } else {
+            renderPosts();
+        }
+    });
+
+    function requestLocationAndRender() {
+        if (!navigator.geolocation) {
+            showToast('Η τοποθεσία δεν υποστηρίζεται από τον browser σας.', 'error');
+            sortSelect.value = 'newest';
+            currentSort = 'newest';
+            radiusSelect.value = 'all';
+            currentRadius = 'all';
+            return;
+        }
+        showToast('Εντοπισμός τοποθεσίας...', 'info');
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                renderPosts();
+            },
+            (err) => {
+                showToast('Αποτυχία εντοπισμού.', 'error');
+                sortSelect.value = 'newest';
+                currentSort = 'newest';
+                radiusSelect.value = 'all';
+                currentRadius = 'all';
+                renderPosts();
+            }
+        );
+    }
 
     // --- Distance Helper (Haversine) ---
     function getDistance(lat1, lon1, lat2, lon2) {
@@ -192,18 +219,31 @@ export function renderFeed(navigate, state) {
             return true;
         });
 
+        // Calculate distance for ALL posts if needed for radius filter or distance sorting
+        if (userLocation) {
+            filtered.forEach(p => {
+                p._dist = getDistance(userLocation.lat, userLocation.lng, p.latitude, p.longitude);
+            });
+        }
+
+        // Apply radius filter
+        if (currentRadius !== 'all' && userLocation) {
+            const maxDist = parseFloat(currentRadius);
+            filtered = filtered.filter(p => p._dist !== undefined && p._dist <= maxDist);
+        }
+
         // Sorting
         if (currentSort === 'portions') {
             filtered.sort((a, b) => b.available_portions - a.available_portions);
         } else if (currentSort === 'distance' && userLocation) {
-            filtered.forEach(p => {
-                p._dist = getDistance(userLocation.lat, userLocation.lng, p.latitude, p.longitude);
-            });
             filtered.sort((a, b) => a._dist - b._dist);
         } else {
             // newest
             filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         }
+
+        // --- Limit Results (Max 50) ---
+        filtered = filtered.slice(0, 50);
 
         if (filtered.length === 0) {
             listContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">Κανένα αποτέλεσμα για αυτά τα φίλτρα.</div>';

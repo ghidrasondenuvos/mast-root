@@ -1001,34 +1001,42 @@ app.put('/api/db-edit-batch/:table', async (req, res) => {
 // ==========================================
 // BACKGROUND TASKS (CRON)
 // ==========================================
-setInterval(async () => {
+async function runBackgroundTasks() {
     try {
         // 1. Mark posts older than 48h as deleted
-        await pool.execute("UPDATE posts SET status='deleted' WHERE status='active' AND TIMESTAMPDIFF(HOUR, created_at, NOW()) > 48");
+        await pool.execute("UPDATE posts SET status='deleted' WHERE status != 'deleted' AND TIMESTAMPDIFF(HOUR, created_at, NOW()) >= 48");
         
         // 2. Penalize consumers for missing reviews after 48h
-        // We find requests that are 'received' and have no review after 48h
+        // We find requests that are 'delivered' and have no review after 48h
         const [requests] = await pool.execute(`
-            SELECT id, consumer_id FROM requests 
-            WHERE status='received' 
-            AND id NOT IN (SELECT request_id FROM reviews) 
-            AND TIMESTAMPDIFF(HOUR, updated_at, NOW()) > 48
+            SELECT r.id, r.consumer_id 
+            FROM requests r
+            WHERE r.status = 'delivered' 
+            AND TIMESTAMPDIFF(HOUR, r.updated_at, NOW()) >= 48
+            AND NOT EXISTS (SELECT 1 FROM reviews rev WHERE rev.request_id = r.id AND rev.reviewer_id = r.consumer_id)
+            AND NOT EXISTS (SELECT 1 FROM credit_transactions ct WHERE ct.user_id = r.consumer_id AND ct.description LIKE CONCAT('%Req:', r.id, '%'))
         `);
 
         for (const req of requests) {
-            // Deduct 1 credit
+            const [creditCheck] = await pool.execute('SELECT credits FROM users WHERE id = ?', [req.consumer_id]);
+            // Allow credits to go negative or deduct down to 0, depending on design. Here we deduct anyway to penalize.
             await pool.execute('UPDATE users SET credits = credits - 1 WHERE id = ?', [req.consumer_id]);
-            // Insert a mock review to prevent multiple deductions
-            await pool.execute('INSERT INTO reviews (request_id, consumer_id, cook_id, rating, comment) VALUES (?, ?, ?, ?, ?)', 
-                [req.id, req.consumer_id, req.consumer_id, 0, 'AUTO_PENALTY_NO_REVIEW']);
-            // Notify user
-            await pool.execute("INSERT INTO notifications (user_id, type, message, is_read) VALUES (?, ?, ?, false)", 
-                [req.consumer_id, 'penalty', 'Σου αφαιρέθηκε 1 credit λόγω μη αξιολόγησης γεύματος εντός 48 ωρών.']);
+            
+            // Log credit transaction with specific description to avoid duplicate penalty
+            await logCreditTransaction(pool, req.consumer_id, -1, 'penalty', `Ποινή 48h μη-αξιολόγησης (Req:${req.id})`);
+            
+            // Notify user (using existing 'welcome' or generic info type, actually 'welcome' acts as a generic alert if others fail, but 'no_show' is also a penalty type)
+            await createNotification(pool, req.consumer_id, 'no_show', 'Σου αφαιρέθηκε 1 credit λόγω μη αξιολόγησης γεύματος εντός 48 ωρών από την παραλαβή.', req.id);
         }
     } catch (e) {
         console.error('Background tasks error:', e);
     }
-}, 60 * 60 * 1000); // Check every 1 hour
+}
+
+// Run every 10 minutes
+setInterval(runBackgroundTasks, 10 * 60 * 1000);
+// Run once on startup
+setTimeout(runBackgroundTasks, 5000);
 
 // Εκκίνηση Server
 const PORT = 3000;
